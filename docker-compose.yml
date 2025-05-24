@@ -1,0 +1,187 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: hexagon-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    ports:
+      - "${DB_EXPORT:-12300}:5432"
+    networks:
+      - hexagon-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: hexagon-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./minio/data:/data
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    networks:
+      - hexagon-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # HexagonApi - FastAPI Backend
+  hexagon-api:
+    build:
+      context: ./HexagonApi
+      dockerfile: Dockerfile
+    container_name: hexagon-api
+    restart: unless-stopped
+    environment:
+      - ENV=${ENV:-dev}
+      - NAME=${API_PROJECT_NAME}
+      - VERSION=${VERSION}
+      - ERRORS=${ERRORS}
+      - LAUNCH_SCREEN=${LAUNCH_SCREEN}
+      - STATIC__ROOT=${STATIC_ROOT}
+      - STATIC__PATH=${STATIC_PATH}
+      - STORAGE__URL=${STORAGE_URL}
+      - TZ__TIMEZONE=${TIME_ZONE}
+      - DOCS__ENABLED=${DOCS_ENABLED}
+      - DOCS__USERNAME=${DOCS_USERNAME}
+      - DOCS__PASSWORD=${DOCS_PASSWORD}
+      - DOCS__URL_PREFIX=${DOCS_URL_PREFIX}
+      - DB__DSN=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - MINIO__ENDPOINT=minio:9000
+      - MINIO__ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO__SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - FIREBASE__KIND=${FIREBASE_KIND}
+      - FIREBASE__PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE__NAME=${FIREBASE_NAME}
+      - FIREBASE__API_KEY=${FIREBASE_API_KEY}
+      - FIREBASE__CREDENTIAL=${FIREBASE_CREDENTIAL}
+      - EMAIL__USER=${EMAIL_USER}
+      - EMAIL__PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL__HOST=${EMAIL_HOST}
+      - EMAIL__PORT=${EMAIL_PORT:-587}
+      - EMAIL__TLS=${EMAIL_TLS:-True}
+      - EMAIL__SSL=${EMAIL_SSL:-False}
+    volumes:
+      - ./HexagonApi:/app
+      - ./logs/api:/app/logs
+      - ./uploads:/app/uploads
+    ports:
+      - "${API_EXPORT:-12100}:8000"
+    networks:
+      - hexagon-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${API_EXPORT:-12100}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # HexagonAdmin - Django Admin Panel
+  hexagon-admin:
+    build:
+      context: ./HexagonAdmin
+      dockerfile: Dockerfile
+    container_name: hexagon-admin
+    restart: unless-stopped
+    environment:
+      - ENV=${ENV:-dev}
+      - SECRET_KEY=${ADMIN_SECRET_KEY}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - TIME_ZONE=${TIME_ZONE}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_TLS=${EMAIL_TLS:-True}
+      - EMAIL_SSL=${EMAIL_SSL:-False}
+      - SUPER_USERNAME=${SUPER_USERNAME}
+      - SUPER_PASSWORD=${SUPER_PASSWORD}
+      - SUPER_EMAIL=${SUPER_EMAIL}
+      - ADMIN_SITE=1
+      - ADMIN_SITE_NAME=${ADMIN_SITE_NAME}
+    volumes:
+      - ./HexagonAdmin:/app
+      - ./logs/admin:/app/logs
+      - ./static:/app/static
+      - ./media:/app/media
+    ports:
+      - "${ADMIN_EXPORT:-12200}:8000"
+    networks:
+      - hexagon-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${ADMIN_EXPORT:-12200}/admin/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: hexagon-nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./static:/var/www/static:ro
+      - ./media:/var/www/media:ro
+      - ./logs/nginx:/var/log/nginx
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    networks:
+      - hexagon-network
+    depends_on:
+      - hexagon-api
+      - hexagon-admin
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      
+networks:
+  hexagon-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  minio_data:
+    driver: local
