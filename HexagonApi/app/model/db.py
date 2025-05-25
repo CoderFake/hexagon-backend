@@ -14,31 +14,14 @@ class Base(DeclarativeBase):
     pass
 
 
-# ----------------------------------------------------------------
-# Enums
-# ----------------------------------------------------------------
-class FileTypeEnum(str, enum.Enum):
-    PDF = "PDF"
-    DOC = "DOC"
-    VIDEO = "VIDEO"
-    AUDIO = "AUDIO"
-    IMAGE = "IMAGE"
-    OTHER = "OTHER"
+# ================================================================
+# ENUMS
+# ================================================================
 
-
-class AccessLevelEnum(str, enum.Enum):
-    PUBLIC = "public"
-    STUDENT = "student"
-    PREMIUM = "premium"
-    INTERNAL = "internal"
-
-
-class InquiryStatusEnum(str, enum.Enum):
-    NEW = "new"
-    CONTACTED = "contacted"
-    SCHEDULED = "scheduled"
-    ENROLLED = "enrolled"
-    DECLINED = "declined"
+class LearningMethodEnum(str, enum.Enum):
+    OFFLINE = "offline"
+    ONLINE = "online"
+    HYBRID = "hybrid"
 
 
 class EnrollmentStatusEnum(str, enum.Enum):
@@ -56,66 +39,67 @@ class PaymentStatusEnum(str, enum.Enum):
     REFUNDED = "refunded"
 
 
-class BannerPositionEnum(str, enum.Enum):
-    HERO = "hero"
-    SIDEBAR = "sidebar"
-    FOOTER = "footer"
-    POPUP = "popup"
+class FileTypeEnum(str, enum.Enum):
+    PDF = "PDF"
+    DOC = "DOC"
+    VIDEO = "VIDEO"
+    AUDIO = "AUDIO"
+    IMAGE = "IMAGE"
+    OTHER = "OTHER"
 
 
-# ----------------------------------------------------------------
-# User & Profile
-# ----------------------------------------------------------------
-class User(Base):
-    __tablename__ = "user"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    username: Mapped[str] = mapped_column(String(150), unique=True)
-    email: Mapped[str] = mapped_column(String(255), unique=True)
-    first_name: Mapped[str] = mapped_column(String(150))
-    last_name: Mapped[str] = mapped_column(String(150))
-    phone_number: Mapped[Optional[str]] = mapped_column(String(17))
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    date_joined: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    firebase_id: Mapped[Optional[str]] = mapped_column(String(255))
-    login_method: Mapped[Optional[str]] = mapped_column(String(50))
-
-    # Relationship
-    profile: Mapped[Optional["UserProfile"]] = relationship("UserProfile", back_populates="user", uselist=False)
+class NewsCategoryTypeEnum(str, enum.Enum):
+    EXAM_RESULTS = "exam_results"
+    UPCOMING_EVENTS = "upcoming_events"
+    GENERAL = "general"
 
 
-class UserProfile(Base):
-    __tablename__ = "user_profile"
+class EnrollmentMethodEnum(str, enum.Enum):
+    ADMIN = "admin"
+    CLASS_CODE = "class_code"
+    ONLINE_FORM = "online_form"
+
+
+# ================================================================
+# USER & AUTHENTICATION
+# ================================================================
+
+class Account(Base):
+    __tablename__ = "account"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("user.id"))
-    bio: Mapped[Optional[str]] = mapped_column(Text)
-    address: Mapped[Optional[str]] = mapped_column(String(255))
-    profile_picture: Mapped[Optional[str]] = mapped_column(String(255))
-
-    # Relationship
-    user: Mapped["User"] = relationship("User", back_populates="profile")
-
-
-# ----------------------------------------------------------------
-# Course System
-# ----------------------------------------------------------------
-class Subject(Base):
-    __tablename__ = "subject"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    login_id: Mapped[str] = mapped_column(String(255), unique=True)
     name: Mapped[str] = mapped_column(String(200))
-    slug: Mapped[str] = mapped_column(String(255), unique=True)
-    code: Mapped[str] = mapped_column(String(20), unique=True)
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    icon_class: Mapped[Optional[str]] = mapped_column(String(50))
-    color: Mapped[str] = mapped_column(String(7), default="#2952bf")
-    order: Mapped[int] = mapped_column(Integer, default=0)
+    email: Mapped[str] = mapped_column(String(255))
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    modified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+
+class Student(Base):
+    __tablename__ = "student"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    account_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("account.id"), unique=True)
+    name: Mapped[str] = mapped_column(String(200))
+    student_id: Mapped[str] = mapped_column(String(20), unique=True)
+    date_of_birth: Mapped[date] = mapped_column(Date)
+    phone: Mapped[str] = mapped_column(String(20))
+    address: Mapped[str] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
+    # Relationships
+    account: Mapped["Account"] = relationship("Account")
+    enrollments: Mapped[List["StudentCourseEnrollment"]] = relationship("StudentCourseEnrollment",
+                                                                        back_populates="student")
+
+
+# ================================================================
+# COURSE SYSTEM
+# ================================================================
 
 class CourseCategory(Base):
     __tablename__ = "course_category"
@@ -123,14 +107,7 @@ class CourseCategory(Base):
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
     name: Mapped[str] = mapped_column(String(100))
     slug: Mapped[str] = mapped_column(String(255), unique=True)
-    short_name: Mapped[str] = mapped_column(String(20))
-    description: Mapped[str] = mapped_column(Text)
-    subtitle: Mapped[Optional[str]] = mapped_column(Text)
-    age_range_min: Mapped[int] = mapped_column(Integer)
-    age_range_max: Mapped[int] = mapped_column(Integer)
-    hero_image: Mapped[Optional[str]] = mapped_column(String(255))
-    icon: Mapped[Optional[str]] = mapped_column(String(255))
-    color: Mapped[str] = mapped_column(String(7), default="#2952bf")
+    description: Mapped[Optional[str]] = mapped_column(Text)
     order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -145,16 +122,11 @@ class Course(Base):
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
     category_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course_category.id"))
-    name: Mapped[str] = mapped_column(String(200))
+    title: Mapped[str] = mapped_column(String(200))
     slug: Mapped[str] = mapped_column(String(255), unique=True)
-    description: Mapped[str] = mapped_column(Text)
-    content: Mapped[Optional[str]] = mapped_column(Text)
-    duration_months: Mapped[int] = mapped_column(Integer)
-    hours_per_week: Mapped[str] = mapped_column(String(50))
-    class_schedule: Mapped[Optional[dict]] = mapped_column(JSON)
-    image: Mapped[Optional[str]] = mapped_column(String(255))
-    price: Mapped[Decimal] = mapped_column(DECIMAL(10, 0), default=0)
-    max_students: Mapped[int] = mapped_column(Integer, default=20)
+    short_description: Mapped[str] = mapped_column(Text)
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False)
     order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -162,110 +134,286 @@ class Course(Base):
 
     # Relationships
     category: Mapped["CourseCategory"] = relationship("CourseCategory", back_populates="courses")
-    course_subjects: Mapped[List["CourseSubject"]] = relationship("CourseSubject", back_populates="course")
+    classes: Mapped[List["CourseClass"]] = relationship("CourseClass", back_populates="course")
+    files: Mapped[List["CourseFile"]] = relationship("CourseFile", back_populates="course")
+    roadmap: Mapped[Optional["CourseRoadmap"]] = relationship("CourseRoadmap", back_populates="course", uselist=False)
+    outstanding_students: Mapped[List["OutstandingStudent"]] = relationship("OutstandingStudent",
+                                                                            back_populates="course")
+    additional_info: Mapped[Optional["CourseAdditionalInfo"]] = relationship("CourseAdditionalInfo",
+                                                                             back_populates="course", uselist=False)
 
 
-class CourseSubject(Base):
-    __tablename__ = "course_subject"
+class CourseClass(Base):
+    __tablename__ = "course_class"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
     course_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course.id"))
-    subject_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("subject.id"))
-    lecture_hours: Mapped[int] = mapped_column(Integer, default=0)
-    tutorial_hours: Mapped[int] = mapped_column(Integer, default=0)
-    lab_hours: Mapped[int] = mapped_column(Integer, default=0)
-    is_required: Mapped[bool] = mapped_column(Boolean, default=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-    # Relationships
-    course: Mapped["Course"] = relationship("Course", back_populates="course_subjects")
-    subject: Mapped["Subject"] = relationship("Subject")
-
-    __table_args__ = (UniqueConstraint('course_id', 'subject_id'),)
-
-
-class Alumni(Base):
-    __tablename__ = "alumni"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    name: Mapped[str] = mapped_column(String(200))
-    photo: Mapped[Optional[str]] = mapped_column(String(255))
-    academic_achievements: Mapped[Optional[List]] = mapped_column(JSON)
-    exam_results: Mapped[Optional[dict]] = mapped_column(JSON)
-    current_school: Mapped[Optional[str]] = mapped_column(String(200))
-    university_admitted: Mapped[Optional[str]] = mapped_column(String(200))
-    scholarship_received: Mapped[Optional[str]] = mapped_column(Text)
-    testimonial: Mapped[Optional[str]] = mapped_column(Text)
-    linkedin_url: Mapped[Optional[str]] = mapped_column(String(255))
-    graduation_year: Mapped[Optional[int]] = mapped_column(Integer)
-    is_featured: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-
-# ----------------------------------------------------------------
-# Materials
-# ----------------------------------------------------------------
-class MaterialCategory(Base):
-    __tablename__ = "material_category"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    name: Mapped[str] = mapped_column(String(100))
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    icon: Mapped[Optional[str]] = mapped_column(String(50))
-    is_public: Mapped[bool] = mapped_column(Boolean, default=True)
+    title: Mapped[str] = mapped_column(String(200))
+    short_description: Mapped[str] = mapped_column(Text)
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    address: Mapped[str] = mapped_column(Text)
+    schedule_description: Mapped[str] = mapped_column(Text)
+    learning_method: Mapped[LearningMethodEnum] = mapped_column(Enum(LearningMethodEnum),
+                                                                default=LearningMethodEnum.OFFLINE)
+    class_code: Mapped[str] = mapped_column(String(20), unique=True)
+    is_open_for_enrollment: Mapped[bool] = mapped_column(Boolean, default=True)
+    max_students: Mapped[int] = mapped_column(Integer, default=30)
     order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     # Relationships
-    materials: Mapped[List["Material"]] = relationship("Material", back_populates="category")
+    course: Mapped["Course"] = relationship("Course", back_populates="classes")
+    content_blocks: Mapped[List["CourseContentBlock"]] = relationship("CourseContentBlock",
+                                                                      back_populates="course_class")
+    enrollments: Mapped[List["StudentCourseEnrollment"]] = relationship("StudentCourseEnrollment",
+                                                                        back_populates="course_class")
 
 
-class Material(Base):
-    __tablename__ = "material"
+class CourseContentBlock(Base):
+    __tablename__ = "course_content_block"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    title: Mapped[str] = mapped_column(String(200))
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    category_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("material_category.id"))
-    course_id: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("course.id"))
-    subject_id: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("subject.id"))
-
-    # File information
-    file_url: Mapped[str] = mapped_column(String(255))
-    file_name: Mapped[str] = mapped_column(String(255))
-    file_size: Mapped[Optional[int]] = mapped_column(Integer)
-    file_type: Mapped[FileTypeEnum] = mapped_column(Enum(FileTypeEnum), default=FileTypeEnum.PDF)
-
-    # Access control
-    is_public: Mapped[bool] = mapped_column(Boolean, default=True)
-    is_free: Mapped[bool] = mapped_column(Boolean, default=True)
-    access_level: Mapped[AccessLevelEnum] = mapped_column(Enum(AccessLevelEnum), default=AccessLevelEnum.PUBLIC)
-
-    # Statistics
-    download_count: Mapped[int] = mapped_column(Integer, default=0)
-    view_count: Mapped[int] = mapped_column(Integer, default=0)
-
-    uploaded_by_id: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("user.id"))
+    course_class_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course_class.id"))
+    title: Mapped[Optional[str]] = mapped_column(String(200))
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    descriptions: Mapped[List[str]] = mapped_column(JSON, default=list)
+    order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     # Relationships
-    category: Mapped["MaterialCategory"] = relationship("MaterialCategory", back_populates="materials")
-    course: Mapped[Optional["Course"]] = relationship("Course")
-    subject: Mapped[Optional["Subject"]] = relationship("Subject")
-    uploaded_by: Mapped[Optional["User"]] = relationship("User")
+    course_class: Mapped["CourseClass"] = relationship("CourseClass", back_populates="content_blocks")
 
 
-# ----------------------------------------------------------------
-# News
-# ----------------------------------------------------------------
+class CourseFile(Base):
+    __tablename__ = "course_file"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    course_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course.id"))
+    name: Mapped[str] = mapped_column(String(200))
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    file_key: Mapped[str] = mapped_column(String(255))
+    file_type: Mapped[FileTypeEnum] = mapped_column(Enum(FileTypeEnum), default=FileTypeEnum.PDF)
+    file_size: Mapped[Optional[int]] = mapped_column(Integer)
+    download_count: Mapped[int] = mapped_column(Integer, default=0)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    course: Mapped["Course"] = relationship("Course", back_populates="files")
+
+
+class CourseRoadmap(Base):
+    __tablename__ = "course_roadmap"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    course_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course.id"))
+    short_description: Mapped[str] = mapped_column(Text)
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    slogan: Mapped[str] = mapped_column(String(200))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    course: Mapped["Course"] = relationship("Course", back_populates="roadmap")
+    content_blocks: Mapped[List["RoadmapContentBlock"]] = relationship("RoadmapContentBlock", back_populates="roadmap")
+
+
+class RoadmapContentBlock(Base):
+    __tablename__ = "roadmap_content_block"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    roadmap_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course_roadmap.id"))
+    title: Mapped[Optional[str]] = mapped_column(String(200))
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    descriptions: Mapped[List[str]] = mapped_column(JSON, default=list)
+    general_description: Mapped[Optional[str]] = mapped_column(Text)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    roadmap: Mapped["CourseRoadmap"] = relationship("CourseRoadmap", back_populates="content_blocks")
+
+
+class OutstandingStudent(Base):
+    __tablename__ = "outstanding_student"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    course_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course.id"))
+    name: Mapped[str] = mapped_column(String(200))
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    awards: Mapped[List[str]] = mapped_column(JSON, default=list)
+    current_education: Mapped[str] = mapped_column(Text)
+    testimonial: Mapped[Optional[str]] = mapped_column(Text)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    course: Mapped["Course"] = relationship("Course", back_populates="outstanding_students")
+
+
+class CourseAdditionalInfo(Base):
+    __tablename__ = "course_additional_info"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    course_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course.id"))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    course: Mapped["Course"] = relationship("Course", back_populates="additional_info")
+    content_blocks: Mapped[List["CourseAdditionalContentBlock"]] = relationship("CourseAdditionalContentBlock",
+                                                                                back_populates="additional_info")
+
+
+class CourseAdditionalContentBlock(Base):
+    __tablename__ = "course_additional_content_block"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    additional_info_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course_additional_info.id"))
+    title: Mapped[Optional[str]] = mapped_column(String(200))
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    descriptions: Mapped[List[str]] = mapped_column(JSON, default=list)
+    general_description: Mapped[Optional[str]] = mapped_column(Text)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    additional_info: Mapped["CourseAdditionalInfo"] = relationship("CourseAdditionalInfo",
+                                                                   back_populates="content_blocks")
+
+
+# ================================================================
+# ENROLLMENT SYSTEM
+# ================================================================
+
+class StudentCourseEnrollment(Base):
+    __tablename__ = "student_course_enrollment"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("student.id"))
+    course_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course.id"))
+    course_class_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course_class.id"))
+
+    enrollment_date: Mapped[date] = mapped_column(Date)
+    enrollment_method: Mapped[EnrollmentMethodEnum] = mapped_column(Enum(EnrollmentMethodEnum),
+                                                                    default=EnrollmentMethodEnum.ADMIN)
+    start_date: Mapped[Optional[date]] = mapped_column(Date)
+    end_date: Mapped[Optional[date]] = mapped_column(Date)
+
+    status: Mapped[EnrollmentStatusEnum] = mapped_column(Enum(EnrollmentStatusEnum),
+                                                         default=EnrollmentStatusEnum.ENROLLED)
+
+    tuition_fee: Mapped[Decimal] = mapped_column(DECIMAL(10, 0))
+    paid_amount: Mapped[Decimal] = mapped_column(DECIMAL(10, 0), default=0)
+    payment_status: Mapped[PaymentStatusEnum] = mapped_column(Enum(PaymentStatusEnum), default=PaymentStatusEnum.UNPAID)
+
+    final_grade: Mapped[Optional[str]] = mapped_column(String(5))
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    student: Mapped["Student"] = relationship("Student", back_populates="enrollments")
+    course: Mapped["Course"] = relationship("Course")
+    course_class: Mapped["CourseClass"] = relationship("CourseClass", back_populates="enrollments")
+
+    __table_args__ = (UniqueConstraint('student_id', 'course_class_id'),)
+
+
+# ================================================================
+# GENERAL CONTENT SYSTEM
+# ================================================================
+
+class GeneralRoadmap(Base):
+    __tablename__ = "general_roadmap"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    title: Mapped[str] = mapped_column(String(200))
+    short_description: Mapped[str] = mapped_column(Text)
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    content_blocks: Mapped[List["GeneralRoadmapContentBlock"]] = relationship("GeneralRoadmapContentBlock",
+                                                                              back_populates="roadmap")
+
+
+class GeneralRoadmapContentBlock(Base):
+    __tablename__ = "general_roadmap_content_block"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    roadmap_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("general_roadmap.id"))
+    title: Mapped[Optional[str]] = mapped_column(String(200))
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    descriptions: Mapped[List[str]] = mapped_column(JSON, default=list)
+    general_description: Mapped[Optional[str]] = mapped_column(Text)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    roadmap: Mapped["GeneralRoadmap"] = relationship("GeneralRoadmap", back_populates="content_blocks")
+
+
+class AboutSection(Base):
+    __tablename__ = "about_section"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    title: Mapped[str] = mapped_column(String(200))
+    short_description: Mapped[str] = mapped_column(Text)
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    content_blocks: Mapped[List["AboutContentBlock"]] = relationship("AboutContentBlock",
+                                                                     back_populates="about_section")
+
+
+class AboutContentBlock(Base):
+    __tablename__ = "about_section_content_block"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    about_section_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("about_section.id"))
+    title: Mapped[Optional[str]] = mapped_column(String(200))
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    descriptions: Mapped[List[str]] = mapped_column(JSON, default=list)
+    general_description: Mapped[Optional[str]] = mapped_column(Text)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    about_section: Mapped["AboutSection"] = relationship("AboutSection", back_populates="content_blocks")
+
+
+# ================================================================
+# NEWS SYSTEM
+# ================================================================
+
 class NewsCategory(Base):
     __tablename__ = "news_category"
 
@@ -273,12 +421,15 @@ class NewsCategory(Base):
     name: Mapped[str] = mapped_column(String(100))
     slug: Mapped[str] = mapped_column(String(255), unique=True)
     description: Mapped[Optional[str]] = mapped_column(Text)
-    color: Mapped[str] = mapped_column(String(7), default="#2952bf")
+    course_id: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("course.id"))
+    category_type: Mapped[NewsCategoryTypeEnum] = mapped_column(Enum(NewsCategoryTypeEnum),
+                                                                default=NewsCategoryTypeEnum.GENERAL)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     # Relationships
+    course: Mapped[Optional["Course"]] = relationship("Course")
     news: Mapped[List["News"]] = relationship("News", back_populates="category")
 
 
@@ -286,16 +437,11 @@ class News(Base):
     __tablename__ = "news"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    category_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("news_category.id"))
     title: Mapped[str] = mapped_column(String(200))
     slug: Mapped[str] = mapped_column(String(255), unique=True)
-    excerpt: Mapped[str] = mapped_column(Text)
-    content: Mapped[str] = mapped_column(Text)
-    image: Mapped[Optional[str]] = mapped_column(String(255))
-    author_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("user.id"))
-    category_id: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("news_category.id"))
-    course_category_id: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("course_category.id"))
-    tags: Mapped[Optional[List]] = mapped_column(JSON)
-    is_featured: Mapped[bool] = mapped_column(Boolean, default=False)
+    short_description: Mapped[str] = mapped_column(Text)
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     view_count: Mapped[int] = mapped_column(Integer, default=0)
@@ -304,142 +450,23 @@ class News(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     # Relationships
-    author: Mapped["User"] = relationship("User")
-    category: Mapped[Optional["NewsCategory"]] = relationship("NewsCategory", back_populates="news")
-    course_category: Mapped[Optional["CourseCategory"]] = relationship("CourseCategory")
+    category: Mapped["NewsCategory"] = relationship("NewsCategory", back_populates="news")
+    content_blocks: Mapped[List["NewsContentBlock"]] = relationship("NewsContentBlock", back_populates="news")
 
 
-# ----------------------------------------------------------------
-# Config & Settings
-# ----------------------------------------------------------------
-class SiteSettings(Base):
-    __tablename__ = "site_settings"
+class NewsContentBlock(Base):
+    __tablename__ = "news_content_block"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    key: Mapped[str] = mapped_column(String(100), unique=True)
-    value: Mapped[str] = mapped_column(Text)
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    data_type: Mapped[str] = mapped_column(String(20), default="text")
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-
-class ContactInfo(Base):
-    __tablename__ = "contact_info"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    address: Mapped[str] = mapped_column(Text)
-    phone: Mapped[str] = mapped_column(String(20))
-    email: Mapped[str] = mapped_column(String(255))
-    maps_url: Mapped[Optional[str]] = mapped_column(String(255))
-    facebook_url: Mapped[Optional[str]] = mapped_column(String(255))
-    working_hours: Mapped[Optional[str]] = mapped_column(Text)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-
-class FAQ(Base):
-    __tablename__ = "faq"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    question: Mapped[str] = mapped_column(Text)
-    answer: Mapped[str] = mapped_column(Text)
-    category_id: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("course_category.id"))
+    news_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("news.id"))
+    title: Mapped[Optional[str]] = mapped_column(String(200))
+    image_key: Mapped[Optional[str]] = mapped_column(String(255))
+    descriptions: Mapped[List[str]] = mapped_column(JSON, default=list)
+    general_description: Mapped[Optional[str]] = mapped_column(Text)
     order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     # Relationships
-    category: Mapped[Optional["CourseCategory"]] = relationship("CourseCategory")
-
-
-class Banner(Base):
-    __tablename__ = "banner"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    title: Mapped[str] = mapped_column(String(200))
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    image: Mapped[str] = mapped_column(String(255))
-    link: Mapped[Optional[str]] = mapped_column(String(255))
-    position: Mapped[BannerPositionEnum] = mapped_column(Enum(BannerPositionEnum), default=BannerPositionEnum.HERO)
-    order: Mapped[int] = mapped_column(Integer, default=0)
-    start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    end_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-
-# ----------------------------------------------------------------
-# Enrollment
-# ----------------------------------------------------------------
-class StudentInquiry(Base):
-    __tablename__ = "student_inquiry"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    
-    # Student info
-    student_name: Mapped[str] = mapped_column(String(200))
-    student_age: Mapped[int] = mapped_column(Integer)
-    current_grade: Mapped[Optional[str]] = mapped_column(String(50))
-    current_school: Mapped[Optional[str]] = mapped_column(String(200))
-
-    # Contact info
-    contact_name: Mapped[str] = mapped_column(String(200))
-    email: Mapped[str] = mapped_column(String(255))
-    phone: Mapped[str] = mapped_column(String(20))
-
-    # Interest
-    message: Mapped[Optional[str]] = mapped_column(Text)
-    preferred_contact_time: Mapped[Optional[str]] = mapped_column(String(100))
-
-    # Processing
-    status: Mapped[InquiryStatusEnum] = mapped_column(Enum(InquiryStatusEnum), default=InquiryStatusEnum.NEW)
-    is_contacted: Mapped[bool] = mapped_column(Boolean, default=False)
-    notes: Mapped[Optional[str]] = mapped_column(Text)
-    assigned_to_id: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("user.id"))
-    
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-    # Relationships
-    assigned_to: Mapped[Optional["User"]] = relationship("User")
-
-
-class CourseEnrollment(Base):
-    __tablename__ = "course_enrollment"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    
-    # Student info
-    student_name: Mapped[str] = mapped_column(String(200))
-    date_of_birth: Mapped[date] = mapped_column(Date)
-    student_id: Mapped[str] = mapped_column(String(20), unique=True)
-    current_school: Mapped[Optional[str]] = mapped_column(String(200))
-    address: Mapped[str] = mapped_column(Text)
-
-    # Course
-    course_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("course.id"))
-    enrollment_date: Mapped[date] = mapped_column(Date)
-    start_date: Mapped[Optional[date]] = mapped_column(Date)
-    end_date: Mapped[Optional[date]] = mapped_column(Date)
-
-    # Status
-    status: Mapped[EnrollmentStatusEnum] = mapped_column(Enum(EnrollmentStatusEnum), default=EnrollmentStatusEnum.ENROLLED)
-
-    # Payment
-    tuition_fee: Mapped[Decimal] = mapped_column(DECIMAL(10, 0))
-    paid_amount: Mapped[Decimal] = mapped_column(DECIMAL(10, 0), default=0)
-    payment_status: Mapped[PaymentStatusEnum] = mapped_column(Enum(PaymentStatusEnum), default=PaymentStatusEnum.UNPAID)
-
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-    # Relationships
-    course: Mapped["Course"] = relationship("Course")
-
+    news: Mapped["News"] = relationship("News", back_populates="content_blocks")
