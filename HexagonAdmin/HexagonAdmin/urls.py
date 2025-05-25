@@ -16,7 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.contrib import admin
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 ]
+
+admin.site.site_header = "Hexagon Education Admin"
+admin.site.site_title = "Hexagon Admin"
+admin.site.index_title = "Quản lý hệ thống"
