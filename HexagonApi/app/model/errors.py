@@ -94,6 +94,9 @@ class Errors(Errorneous, Enum):
     UNAUTHORIZED = dauto("Authentication failed.")
     NOT_SIGNED_UP = dauto("Sign up required.")
 
+    # request
+    INVALID_REQUEST = dauto("Invalid request.")
+
     # data
     DATA_NOT_FOUND = dauto("Data does not exist.")
     INVALID_IMAGE_FORMAT = dauto("Invalid image format.")
