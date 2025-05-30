@@ -4,16 +4,18 @@ from app.api.commons import (
     Authorized,
     Depends,
     Query,
+    Body,
+    Response,
     vr,
+    vq,
     with_token,
     with_user,
 )
 
 router = APIRouter()
 
-
 @router.post(
-    "",
+    "/signup",
     status_code=201,
     responses={
         201: {"description": "Signed up user information."},
@@ -21,80 +23,68 @@ router = APIRouter()
 )
 async def signup(
     auth: Authorized = Depends(with_token),
-) -> vr.Me:
-    """
-    Perform signup.
-    """
+) -> vr.User:
     login_id = auth.claims.get("sub", "")
-    name = auth.claims.get("name", "")
+    name = auth.claims.get("name", None)
     email = auth.claims.get("email", "")
-    account = (await as_.signup(login_id, name, email)).get()
-    return vr.Me.of(account)
+    picture_url = auth.claims.get("picture", "")
+    login_method = auth.claims.get('firebase', {}).get('sign_in_provider', 'unknown')
+
+    if name is None:
+        name = email.split('@')[0]
+
+    account = (await as_.signup(login_id, name, email, login_method, picture_url)).get()
+    return vr.User.of(account)
 
 
 @router.get(
-    "",
+    "/auth",
+    status_code=200,
+)
+async def get_me(
+    auth: Authorized = Depends(with_user),
+) -> None:
+    await as_.login(auth.claims.get("sub", ""))
+    return None
+
+
+@router.get(
+    "/profile",
     responses={
-        200: {"description": "User information."},
+        200: {"description": "User profile information."},
     },
 )
-async def login(
+async def get_profile(
     auth: Authorized = Depends(with_user),
-) -> vr.Me:
-    """
-    Perform login.
-    """
-    login_id = auth.claims.get("sub", "")
-    account = (await as_.login(login_id)).get()
+) -> vr.UserProfile:
+    profile = (await as_.get_user_profile(auth.user)).get()
+    return vr.UserProfile.of(profile)
 
-    return vr.Me.of(account)
+
+@router.put(
+    "/profile",
+    responses={
+        200: {"description": "Updated user profile."},
+    },
+)
+async def update_profile(
+    request: vq.UpdateProfileRequest = Body(...),
+    auth: Authorized = Depends(with_user),
+) -> vr.UserProfile:
+    profile = (await as_.update_user_profile(
+        auth.user, 
+        bio=request.bio, 
+        address=request.address
+    )).get()
+    return vr.UserProfile.of(profile)
 
 
 @router.delete(
-    "",
-    status_code=204,
-    responses={
-        204: {"description": "Processing successful."},
-    },
-)
-async def withdraw(
-    auth: Authorized = Depends(with_user),
-):
-    """
-    Withdraw from the service.
-
-    Along with account information, all existing data and files will be deleted.
-    """
-    await as_.withdraw(auth.me)
-
-
-@router.get(
-    "/total-point",
-    responses={
-        200: {"description": "User information."},
-    },
-)
-async def total_point(
-    auth: Authorized = Depends(with_user),
-):
-    login_id = auth.claims.get("sub", "")
-
-    return await as_.total_points(login_id)
-
-
-@router.get(
-    "/point-detail",
+    "/withdraw",
     status_code=200,
-    responses={
-        200: {"description": "User point history information."},
-    },
 )
-async def point_history(
-    auth: Authorized = Depends(with_user),
-    page: int = Query(default=1, ge=1, description="Page number, starting from 1"),
-    size: int = Query(default=30, ge=1, le=100, description="Number of items per page"),
-):
-    login_id = auth.claims.get("sub", "")
-    if page < 1:
-        page = 1
-    return await as_.point_history(login_id, page, size)
+async def delete_account(
+    auth: Authorized = Depends(with_user)
+) -> None:
+    await as_.withdraw(auth.user)
+    return None
