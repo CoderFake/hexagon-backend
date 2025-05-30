@@ -1,7 +1,7 @@
 from datetime import datetime, date, timedelta, timezone
 from dataclasses import field, InitVar
 from typing import Any, Optional, cast
-from fastapi import APIRouter, Depends, Header, Query, Path, Request, Response, File, UploadFile
+from fastapi import APIRouter, Depends, Header, Query, Path, Request, Response, File, UploadFile, Body
 from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
 from app.model.errors import Errors
