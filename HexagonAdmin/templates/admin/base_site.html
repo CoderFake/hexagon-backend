@@ -1,0 +1,35 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Hexagon Education Admin{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <img src="{% static 'admin/img/logo-label.png' %}" alt="Hexagon Education" style="height: 32px; margin-right: 10px;">
+        Hexagon Education
+    </a>
+</h1>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="shortcut icon" type="image/x-icon" href="{% static 'admin/img/favicon/favicon.ico' %}">
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<!-- Sneat Theme CSS -->
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/core.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/theme-default.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'admin/libs/boxicons/css/boxicons.css' %}">
+
+<!-- Hexagon Admin Theme - Complete Override -->
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/hexagon-admin.css' %}">
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<script src="{% static 'admin/js/helpers.js' %}"></script>
+<script src="{% static 'admin/js/bootstrap.js' %}"></script>
+{% endblock %} 
