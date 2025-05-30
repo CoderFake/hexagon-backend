@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng ký tư vấn mới</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 5px; }
+        .content { padding: 20px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid #ddd; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        .important { background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .footer { color: #666; font-size: 14px; text-align: center; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Hexagon Education</h1>
+            <h2>Thông tin đăng ký tư vấn mới</h2>
+        </div>
+        
+        <div class="content">
+            <p>Có đăng ký tư vấn mới từ khách hàng. Vui lòng xem thông tin chi tiết bên dưới:</p>
+            
+            <table>
+                <tr><th>Họ tên</th><td>{{ full_name }}</td></tr>
+                <tr><th>Số điện thoại</th><td>{{ phone }}</td></tr>
+                <tr><th>Email</th><td>{{ email or 'Không có' }}</td></tr>
+                <tr><th>Khóa học quan tâm</th><td>{{ course_title or 'Không có' }}</td></tr>
+                <tr><th>Lớp học quan tâm</th><td>{{ class_title or 'Không có' }}</td></tr>
+                <tr><th>Loại liên hệ</th><td>{{ inquiry_type_display }}</td></tr>
+                <tr><th>Tin nhắn</th><td>{{ message or 'Không có' }}</td></tr>
+                <tr><th>Thời gian</th><td>{{ created_at }}</td></tr>
+            </table>
+            
+            <div class="important">
+                <strong>⚠️ Lưu ý quan trọng:</strong><br>
+                Vui lòng liên hệ lại khách hàng trong thời gian sớm nhất để tư vấn và hỗ trợ!
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Email tự động từ hệ thống Hexagon Education</p>
+            <p>Thời gian: {{ now }}</p>
+        </div>
+    </div>
+</body>
+</html> 

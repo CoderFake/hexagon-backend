@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Xác nhận đăng ký tư vấn</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px; color: white; }
+        .content { padding: 30px 0; }
+        .info-box { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid #ddd; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        .highlight { background-color: #e8f4fd; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .contact-info { background: #f1f8ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .footer { color: #666; font-size: 14px; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Hexagon Education</h1>
+            <h2>Xác nhận đăng ký tư vấn</h2>
+        </div>
+        
+        <div class="content">
+            <p>Kính chào <strong>{{ full_name }}</strong>,</p>
+            
+            <div class="info-box">
+                <p>Cảm ơn bạn đã quan tâm và gửi đăng ký tư vấn tại <strong>Hexagon Education</strong>!</p>
+                <p>Chúng tôi đã nhận được thông tin đăng ký của bạn và sẽ liên hệ lại trong thời gian sớm nhất.</p>
+            </div>
+            
+            <h3>📋 Thông tin đăng ký của bạn:</h3>
+            <table>
+                <tr><th>Họ tên</th><td>{{ full_name }}</td></tr>
+                <tr><th>Số điện thoại</th><td>{{ phone }}</td></tr>
+                <tr><th>Email</th><td>{{ email or 'Không có' }}</td></tr>
+                {% if course_title %}
+                <tr><th>Khóa học quan tâm</th><td>{{ course_title }}</td></tr>
+                {% endif %}
+                {% if class_title %}
+                <tr><th>Lớp học quan tâm</th><td>{{ class_title }}</td></tr>
+                {% endif %}
+                <tr><th>Loại tư vấn</th><td>{{ inquiry_type_display }}</td></tr>
+                {% if message %}
+                <tr><th>Tin nhắn</th><td>{{ message }}</td></tr>
+                {% endif %}
+                <tr><th>Thời gian đăng ký</th><td>{{ created_at }}</td></tr>
+            </table>
+            
+            <div class="highlight">
+                <h3>🕐 Quy trình tiếp theo:</h3>
+                <p><strong>1.</strong> Đội ngũ tư vấn sẽ liên hệ với bạn trong vòng <strong>24 giờ</strong></p>
+                <p><strong>2.</strong> Tư vấn chi tiết về chương trình học và phương pháp giảng dạy</p>
+                <p><strong>3.</strong> Hỗ trợ đăng ký và sắp xếp lịch học phù hợp</p>
+            </div>
+            
+            <div class="contact-info">
+                <h3>📞 Thông tin liên hệ:</h3>
+                <p><strong>Hotline:</strong> {{ contact_phone or '0901 234 567' }}</p>
+                <p><strong>Email:</strong> {{ contact_email or 'info@hexagon.edu.vn' }}</p>
+                <p><strong>Địa chỉ:</strong> {{ contact_address or 'Hexagon Education Center' }}</p>
+            </div>
+            
+            <p>Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi qua thông tin bên trên.</p>
+            
+            <p>Trân trọng,<br>
+            <strong>Đội ngũ Hexagon Education</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>Email tự động từ hệ thống Hexagon Education</p>
+            <p>© 2024 Hexagon Education. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html> 
