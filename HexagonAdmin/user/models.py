@@ -12,6 +12,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, verbose_name=_("Địa chỉ email"))
     first_name = models.CharField(max_length=150, verbose_name=_("Họ"))
     last_name = models.CharField(max_length=150, verbose_name=_("Tên"))
+    full_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Họ và tên"))
     password = models.CharField(max_length=128, verbose_name=_("Mật khẩu"))
     phone_number = models.CharField(
         max_length=17, 

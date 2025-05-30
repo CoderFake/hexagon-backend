@@ -37,7 +37,7 @@ class Student(BaseModel):
 
 class StudentCourseEnrollment(BaseModel):
     """Đăng ký khóa học của học sinh"""
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, verbose_name=_("Học sinh"))
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE, verbose_name=_("Người dùng"))
     course = models.ForeignKey('course.Course', on_delete=models.CASCADE, verbose_name=_("Khóa học"))
     course_class = models.ForeignKey(
         'course.CourseClass',
@@ -67,7 +67,6 @@ class StudentCourseEnrollment(BaseModel):
             ('studying', 'Đang học'),
             ('completed', 'Hoàn thành'),
             ('dropped', 'Bỏ học'),
-            ('suspended', 'Tạm ngừng'),
         ],
         default='enrolled',
         verbose_name=_("Trạng thái")
@@ -90,7 +89,6 @@ class StudentCourseEnrollment(BaseModel):
             ('unpaid', 'Chưa thanh toán'),
             ('partial', 'Thanh toán một phần'),
             ('paid', 'Đã thanh toán đủ'),
-            ('refunded', 'Đã hoàn tiền'),
         ],
         default='unpaid',
         verbose_name=_("Trạng thái thanh toán")
@@ -102,7 +100,7 @@ class StudentCourseEnrollment(BaseModel):
 
     class Meta:
         db_table = 'student_course_enrollment'
-        unique_together = ['student', 'course_class']
+        unique_together = ['user', 'course_class']
         verbose_name = _("Đăng ký khóa học")
         verbose_name_plural = _("Đăng ký khóa học")
 
@@ -111,7 +109,7 @@ class StudentCourseEnrollment(BaseModel):
         return self.tuition_fee - self.paid_amount
 
     def __str__(self):
-        return f"{self.student.name} - {self.course_class.title}"
+        return f"{self.user.full_name} - {self.course_class.title}"
 
 
 class StudentInquiry(BaseModel):

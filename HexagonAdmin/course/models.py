@@ -106,6 +106,15 @@ class CourseFile(BaseModel):
     name = models.CharField(max_length=200, verbose_name=_("Tên file"))
     description = models.TextField(blank=True)
     file_key = models.CharField(max_length=255, verbose_name=_("Key file"))
+    file_size = models.IntegerField(null=True, blank=True, verbose_name=_("Kích thước file (bytes)"))
+    file_type = models.CharField(max_length=50, blank=True, verbose_name=_("Loại file"))
+    is_downloadable = models.BooleanField(default=True, verbose_name=_("Cho phép tải xuống"))
+    permission_level = models.CharField(max_length=20, default='public', choices=[
+        ('public', 'Công khai - Mọi người'),
+        ('enrolled', 'Học viên đã đăng ký'),
+        ('admin', 'Chỉ admin'),
+    ], verbose_name=_("Quyền truy cập"))
+    download_count = models.IntegerField(default=0, verbose_name=_("Số lượt tải"))
 
     class Meta:
         db_table = 'course_file'
@@ -146,6 +155,7 @@ class OutstandingStudent(BaseModel):
     """Học sinh tiêu biểu"""
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='outstanding_students')
     name = models.CharField(max_length=200, verbose_name=_("Tên"))
+    image_key = models.CharField(max_length=255, blank=True, verbose_name=_("Key ảnh"))
     awards = models.JSONField(default=list, verbose_name=_("Giải thưởng"))
     current_education = models.TextField(verbose_name=_("Học tập hiện tại"))
 
