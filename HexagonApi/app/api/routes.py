@@ -7,7 +7,7 @@ from app.model.errors import Errors
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from .route.front import me
+from .route.front import me, courses, enrollments, news, homepage, website, contact, files
 from .route.internal import docs
 from .shared.errors import ValidationErrorResponse, errorModel, setup_handlers
 
@@ -38,14 +38,60 @@ def setup_api(app: FastAPI, env: Environment, logger: logging.Logger):
         },
     )
 
+    router.include_router(
+        prefix="/courses",
+        router=courses.router,
+        tags=["Courses"],
+    )
 
-    # Set up docs authentication if needed (staging/production)
+    router.include_router(
+        prefix="/enrollments",
+        router=enrollments.router,
+        tags=["Enrollments"],
+        responses={
+            401: dict(model=authError, description="Authentication failed."),
+        },
+    )
+
+    router.include_router(
+        prefix="/news",
+        router=news.router,
+        tags=["News"],
+    )
+
+    router.include_router(
+        prefix="/homepage",
+        router=homepage.router,
+        tags=["Homepage"],
+    )
+
+    router.include_router(
+        prefix="/website",
+        router=website.router,
+        tags=["Website"],
+    )
+
+    router.include_router(
+        prefix="/contact",
+        router=contact.router,
+        tags=["Contact"],
+    )
+
+    router.include_router(
+        prefix="/files",
+        router=files.router,
+        tags=["Files"],
+    )
+
+    @router.get("/health", tags=["Health"])
+    async def health_check():
+        """Health check endpoint for Docker and load balancers."""
+        return {"status": "healthy", "service": "hexagon-api"}
+
     if env.settings.docs.enabled and env.settings.docs.username:
-        # Add HTTP Basic Auth to the OpenAPI schema for Swagger UI
         from fastapi.openapi.utils import get_openapi
         from fastapi.security import HTTPBasic
         
-        # Add security scheme to OpenAPI
         def custom_openapi():
             if app.openapi_schema:
                 return app.openapi_schema
@@ -57,7 +103,6 @@ def setup_api(app: FastAPI, env: Environment, logger: logging.Logger):
                 routes=app.routes,
             )
             
-            # Add security scheme for HTTP Basic Auth
             openapi_schema["components"]["securitySchemes"] = {
                 "HTTPBasic": {
                     "type": "http",
@@ -65,7 +110,6 @@ def setup_api(app: FastAPI, env: Environment, logger: logging.Logger):
                 }
             }
             
-            # Apply security to all paths
             for path in openapi_schema["paths"]:
                 for method in openapi_schema["paths"][path]:
                     openapi_schema["paths"][path][method]["security"] = [{"HTTPBasic": []}]
@@ -75,7 +119,6 @@ def setup_api(app: FastAPI, env: Environment, logger: logging.Logger):
         
         app.openapi = custom_openapi
         
-        # Create custom docs endpoints with authentication
         @app.get("/docs", include_in_schema=False)
         async def get_docs(credentials: HTTPBasicCredentials = Depends(DocumentAuth(env.settings.docs))):
             from fastapi.openapi.docs import get_swagger_ui_html
