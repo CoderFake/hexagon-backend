@@ -17,6 +17,7 @@ from sqlalchemy import (
     union_all,
     update,
 )
+from sqlalchemy.orm import joinedload
 from .commons import Errors, Maybe, c, datetime, m, r, service
 from .types import LoginMethod
 from .utils.account import download_and_save_profile_picture
@@ -31,17 +32,17 @@ async def signup(
     picture_url:  Optional[str]=None
 ) -> Maybe[c.User]:
 
+    # Lock user first
     user = await r.tx.scalar(
-        select(m.User).where(
-            or_(m.User.firebase_id == login_id)
-        ).with_for_update()
+        select(m.User)
+        .where(or_(m.User.firebase_id == login_id))
+        .with_for_update()
     )
     
     now = datetime.now()
     
     if user is None:
-        if name:
-            username = name.lower()
+        username = name.lower() if name else email.split('@')[0]
 
         existing_username = await r.tx.scalar(
             select(m.User).where(m.User.username == username)
@@ -56,6 +57,7 @@ async def signup(
                 username=username,
                 email=email,
                 full_name=name,
+                password=None,  
                 firebase_id=login_id,
                 login_method=login_method,
                 is_active=True,
@@ -73,8 +75,6 @@ async def signup(
                 id=str(uuid4()),
                 user_id=user.id,
                 profile_picture=picture_url,
-                created_at=now,
-                updated_at=now,
             ),
         )
     else:
@@ -89,20 +89,28 @@ async def signup(
             )
         )
 
-        if picture_url and user.profile:
-            if not user.profile.profile_picture or user.login_method == LoginMethod.GOOGLE.value:
+        if picture_url:
+            existing_profile = await r.tx.scalar(
+                select(m.UserProfile).where(m.UserProfile.user_id == user.id)
+            )
+            if existing_profile and (not existing_profile.profile_picture or user.login_method == LoginMethod.GOOGLE.value):
                 new_picture_url = await download_and_save_profile_picture(picture_url, user.id)
                 await r.tx.execute(
                     update(m.UserProfile)
                     .where(m.UserProfile.user_id == user.id)
                     .values(
-                        profile_picture=new_picture_url,
-                        updated_at=now
+                        profile_picture=new_picture_url
                     )
                 )
     
+    db_user = await r.tx.scalar(
+        select(m.User)
+        .options(joinedload(m.User.profile))
+        .where(m.User.id == user.id)
+    )
+    
     await r.tx.commit()
-    return await r.tx.get(c.User, user.id)
+    return c.User.of(db_user)
 
 
 @service
@@ -126,7 +134,14 @@ async def login(login_id: str) -> Maybe[c.User]:
         .values( last_login=now)
     )
     
+    db_user = await r.tx.scalar(
+        select(m.User)
+        .options(joinedload(m.User.profile))
+        .where(m.User.id == user.id)
+    )
+    
     await r.tx.commit()
+    return c.User.of(db_user)
 
 
 @service
@@ -136,19 +151,16 @@ async def get_user_profile(user: c.User) -> Maybe[c.UserProfile]:
     )
     
     if profile is None:
-        now = datetime.now()
         profile = await r.tx.scalar(
             insert(m.UserProfile).returning(m.UserProfile),
             dict(
                 id=str(uuid4()),
                 user_id=user.id,
-                created_at=now,
-                updated_at=now,
             ),
         )
         await r.tx.commit()
     
-    return await r.tx.get(c.UserProfile, profile.id)
+    return c.UserProfile.of(profile)
 
 
 @service
@@ -157,9 +169,7 @@ async def update_user_profile(user: c.User, bio: str = None, address: str = None
         select(m.UserProfile).where(m.UserProfile.user_id == user.id)
     )
     
-    now = datetime.now()
-    update_data = {"updated_at": now}
-    
+    update_data = {}
     if bio is not None:
         update_data["bio"] = bio
     if address is not None:
@@ -173,19 +183,20 @@ async def update_user_profile(user: c.User, bio: str = None, address: str = None
                 user_id=user.id,
                 bio=bio,
                 address=address,
-                created_at=now,
-                updated_at=now,
             ),
         )
     else:
-        await r.tx.execute(
-            update(m.UserProfile)
-            .where(m.UserProfile.user_id == user.id)
-            .values(**update_data)
-        )
+        if update_data:
+            await r.tx.execute(
+                update(m.UserProfile)
+                .where(m.UserProfile.user_id == user.id)
+                .values(**update_data)
+            )
+            
+            await r.tx.refresh(profile)
     
     await r.tx.commit()
-    return await r.tx.get(c.UserProfile, profile.id)
+    return c.UserProfile.of(profile)
 
 
 @service
