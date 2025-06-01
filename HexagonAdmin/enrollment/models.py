@@ -20,12 +20,6 @@ class Student(BaseModel):
     parent_name = models.CharField(max_length=200, verbose_name=_("Tên phụ huynh"))
     parent_phone = models.CharField(max_length=20, verbose_name=_("SĐT phụ huynh"))
 
-    courses = models.ManyToManyField(
-        'course.Course',
-        through='StudentCourseEnrollment',
-        verbose_name=_("Khóa học đã đăng ký")
-    )
-
     class Meta:
         db_table = 'student'
         verbose_name = _("Học sinh")
@@ -36,8 +30,8 @@ class Student(BaseModel):
 
 
 class StudentCourseEnrollment(BaseModel):
-    """Đăng ký khóa học của học sinh"""
-    user = models.ForeignKey('user.User', on_delete=models.CASCADE, verbose_name=_("Người dùng"))
+    """Đăng ký khóa học - User có thể đăng ký mà không cần Student profile"""
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE, related_name='enrollments', verbose_name=_("Người dùng"))
     course = models.ForeignKey('course.Course', on_delete=models.CASCADE, verbose_name=_("Khóa học"))
     course_class = models.ForeignKey(
         'course.CourseClass',
@@ -63,12 +57,13 @@ class StudentCourseEnrollment(BaseModel):
     status = models.CharField(
         max_length=20,
         choices=[
+            ('pending', 'Chờ xác nhận'),
             ('enrolled', 'Đã đăng ký'),
             ('studying', 'Đang học'),
             ('completed', 'Hoàn thành'),
             ('dropped', 'Bỏ học'),
         ],
-        default='enrolled',
+        default='pending',
         verbose_name=_("Trạng thái")
     )
 
@@ -108,8 +103,15 @@ class StudentCourseEnrollment(BaseModel):
     def remaining_fee(self):
         return self.tuition_fee - self.paid_amount
 
+    @property
+    def student_name(self):
+        """Lấy tên học sinh từ Student profile hoặc User"""
+        if hasattr(self.user, 'student_profile'):
+            return self.user.student_profile.name
+        return self.user.full_name or self.user.username
+
     def __str__(self):
-        return f"{self.user.full_name} - {self.course_class.title}"
+        return f"{self.student_name} - {self.course_class.title}"
 
 
 class StudentInquiry(BaseModel):
