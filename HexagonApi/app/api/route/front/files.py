@@ -26,7 +26,7 @@ async def get_course_files(
     auth: Optional[Authorized] = Depends(maybe_user)
 ) -> List[vr.CourseFile]:
     """Get all files for a course (both downloadable and non-downloadable)"""
-    user = auth.user if auth else None
+    user = auth.User if auth else None
     files = (await fs.get_course_files(course_id, user)).get()
     return [vr.CourseFile.of(file, user) for file in files]
 
@@ -43,7 +43,7 @@ async def get_downloadable_files(
     auth: Optional[Authorized] = Depends(maybe_user)
 ) -> List[vr.CourseFile]:
     """Get only downloadable files for a course"""
-    user = auth.user if auth else None
+    user = auth.User if auth else None
     files = (await fs.get_downloadable_files(course_id, user)).get()
     return [vr.CourseFile.of(file, user) for file in files]
 
@@ -60,7 +60,7 @@ async def get_file_details(
     auth: Optional[Authorized] = Depends(maybe_user)
 ) -> vr.CourseFile:
     """Get file details"""
-    user = auth.user if auth else None
+    user = auth.User if auth else None
     file = (await fs.get_file_by_id(file_id, user)).get()
     return vr.CourseFile.of(file, user)
 
@@ -78,6 +78,6 @@ async def download_file(
     auth: Optional[Authorized] = Depends(maybe_user)
 ) -> vr.FileDownloadResponse:
     """Generate download URL for a file"""
-    user = auth.user if auth else None
+    user = auth.User if auth else None
     file, download_url = (await fs.download_file(file_id, user)).get()
     return vr.FileDownloadResponse.of(file, download_url) 

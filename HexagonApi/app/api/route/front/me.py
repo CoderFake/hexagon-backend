@@ -57,7 +57,7 @@ async def get_me(
 async def get_profile(
     auth: Authorized = Depends(with_user),
 ) -> vr.UserProfile:
-    profile = (await as_.get_user_profile(auth.user)).get()
+    profile = (await as_.get_user_profile(auth.User)).get()
     return vr.UserProfile.of(profile)
 
 
@@ -72,7 +72,7 @@ async def update_profile(
     auth: Authorized = Depends(with_user),
 ) -> vr.UserProfile:
     profile = (await as_.update_user_profile(
-        auth.user, 
+        auth.User, 
         bio=request.bio, 
         address=request.address
     )).get()
@@ -86,5 +86,5 @@ async def update_profile(
 async def delete_account(
     auth: Authorized = Depends(with_user)
 ) -> None:
-    await as_.withdraw(auth.user)
+    await as_.withdraw(auth.User)
     return None

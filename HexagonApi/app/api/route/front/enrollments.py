@@ -30,7 +30,7 @@ async def get_my_enrollments(
 ) -> vr.EnrollmentListResponse:
     """Get current user's enrollments"""
     enrollments, total = (await es.get_user_enrollments(
-        user=auth.user,
+        user=auth.User,
         status=status,
         page=page,
         per_page=per_page
@@ -61,7 +61,7 @@ async def get_enrollment(
     auth: Authorized = Depends(with_user)
 ) -> vr.StudentEnrollment:
     """Get enrollment details by ID"""
-    enrollment = (await es.get_enrollment_by_id(enrollment_id, auth.user)).get()
+    enrollment = (await es.get_enrollment_by_id(enrollment_id, auth.User)).get()
     return vr.StudentEnrollment.of(enrollment)
 
 
@@ -80,7 +80,7 @@ async def enroll_by_class_code(
 ) -> vr.StudentEnrollment:
     """Enroll in a class using class code"""
     enrollment = (await es.enroll_by_class_code(
-        user=auth.user,
+        user=auth.User,
         class_code=request.class_code,
         tuition_fee=request.tuition_fee
     )).get()
@@ -102,7 +102,7 @@ async def submit_online_enrollment(
 ) -> vr.StudentEnrollment:
     """Submit online enrollment form"""
     enrollment = (await es.submit_online_enrollment(
-        user=auth.user,
+        user=auth.User,
         course_class_id=request.course_class_id,
         tuition_fee=request.tuition_fee,
         notes=request.notes
