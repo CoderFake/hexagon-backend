@@ -19,7 +19,11 @@ class User(db.User):
         """Get active course enrollments"""
         return [
             enrollment for enrollment in self.enrollments
-            if enrollment.status in [db.EnrollmentStatusEnum.ENROLLED, db.EnrollmentStatusEnum.STUDYING]
+            if enrollment.status in [
+                db.EnrollmentStatusEnum.PENDING,
+                db.EnrollmentStatusEnum.ENROLLED, 
+                db.EnrollmentStatusEnum.STUDYING
+            ]
         ]
 
     def get_completed_courses_count(self) -> int:
@@ -123,7 +127,7 @@ class CourseClass(db.CourseClass):
         """Current number of enrolled students"""
         return len([
             enrollment for enrollment in self.enrollments
-            if enrollment.status in [db.EnrollmentStatusEnum.ENROLLED, db.EnrollmentStatusEnum.STUDYING]
+            if enrollment.status in [db.EnrollmentStatusEnum.PENDING, db.EnrollmentStatusEnum.ENROLLED, db.EnrollmentStatusEnum.STUDYING]
         ])
 
     @property
@@ -201,7 +205,7 @@ class CourseFile(db.CourseFile):
         
         for enrollment in user.enrollments:
             if (enrollment.course_id == self.course_id and 
-                enrollment.status in [db.EnrollmentStatusEnum.ENROLLED, db.EnrollmentStatusEnum.STUDYING] and
+                enrollment.status in [db.EnrollmentStatusEnum.PENDING, db.EnrollmentStatusEnum.ENROLLED, db.EnrollmentStatusEnum.STUDYING] and
                 enrollment.is_active):
                 return True
         return False
@@ -292,6 +296,7 @@ class StudentEnrollment(db.StudentCourseEnrollment):
     def status_display(self) -> str:
         """Human readable status"""
         status_map = {
+            db.EnrollmentStatusEnum.PENDING: 'Chờ xác nhận',
             db.EnrollmentStatusEnum.ENROLLED: 'Đã đăng ký',
             db.EnrollmentStatusEnum.STUDYING: 'Đang học',
             db.EnrollmentStatusEnum.COMPLETED: 'Hoàn thành',

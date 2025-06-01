@@ -24,6 +24,7 @@ class LearningMethodEnum(str, enum.Enum):
 
 
 class EnrollmentStatusEnum(str, enum.Enum):
+    PENDING = "pending"
     ENROLLED = "enrolled"
     STUDYING = "studying"
     COMPLETED = "completed"
@@ -288,7 +289,7 @@ class StudentCourseEnrollment(Base):
     start_date: Mapped[Optional[date]] = mapped_column(Date)
     end_date: Mapped[Optional[date]] = mapped_column(Date)
 
-    status: Mapped[EnrollmentStatusEnum] = mapped_column(Enum(EnrollmentStatusEnum), default=EnrollmentStatusEnum.ENROLLED)
+    status: Mapped[EnrollmentStatusEnum] = mapped_column(Enum(EnrollmentStatusEnum), default=EnrollmentStatusEnum.PENDING)
 
     tuition_fee: Mapped[Decimal] = mapped_column(DECIMAL(10, 0))
     paid_amount: Mapped[Decimal] = mapped_column(DECIMAL(10, 0), default=0)
