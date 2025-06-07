@@ -56,6 +56,7 @@ class FirebaseAuth:
             algorithms=['RS256'],
             audience=self.settings.project_id,
             issuer=f"https://securetoken.google.com/{self.settings.project_id}",
+            leeway=30,
         )
 
     def keys(self, cache = CacheControl(requests.session())) -> dict[str, str]:
