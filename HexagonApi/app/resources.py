@@ -135,7 +135,7 @@ async def configure(
     import app.ext.storage.minio
 
     logger.info(f"Storage URL from settings: {settings.storage.url}")
-    storage = Storage.of(settings.storage.url)
+    storage = Storage.of(settings.storage.url, public_url=settings.storage.public_url)
     if storage is None:
         raise ValueError(f"Invalid URL for storage: {settings.storage.url}")
     

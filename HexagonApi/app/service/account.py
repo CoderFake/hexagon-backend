@@ -28,11 +28,12 @@ async def signup(
     login_id: str,
     name: str,
     email: str,
-    login_method: str,
+    firebase_provider: str,
     picture_url:  Optional[str]=None
 ) -> Maybe[c.User]:
 
-    # Lock user first
+    login_method = LoginMethod.from_firebase_provider(firebase_provider)
+    
     user = await r.tx.scalar(
         select(m.User)
         .where(or_(m.User.firebase_id == login_id))
@@ -164,18 +165,76 @@ async def get_user_profile(user: c.User) -> Maybe[c.UserProfile]:
 
 
 @service
-async def update_user_profile(user: c.User, bio: str = None, address: str = None) -> Maybe[c.UserProfile]:
+async def update_user_profile(
+    user: c.User, 
+    username: str = None,
+    full_name: str = None,
+    phone_number: str = None,
+    profile_picture_file = None,
+    bio: str = None, 
+    address: str = None
+) -> Maybe[c.UserProfile]:
+    db_user = await r.tx.scalar(
+        select(m.User).where(m.User.id == user.id)
+    )
+    
+    if db_user is None or not db_user.is_active:
+        return Errors.UNAUTHORIZED
+    
+    if username is not None and username != db_user.username:
+        existing_user = await r.tx.scalar(
+            select(m.User).where(m.User.username == username, m.User.id != user.id)
+        )
+        if existing_user:
+            return Errors.INVALID_REQUEST  
+    
+    user_update_data = {}
+    if username is not None:
+        user_update_data["username"] = username
+    if full_name is not None:
+        user_update_data["full_name"] = full_name
+    if phone_number is not None:
+        user_update_data["phone_number"] = phone_number
+    
+    # Cập nhật User table nếu có dữ liệu thay đổi
+    if user_update_data:
+        await r.tx.execute(
+            update(m.User)
+            .where(m.User.id == user.id)
+            .values(**user_update_data)
+        )
+    
     profile = await r.tx.scalar(
         select(m.UserProfile).where(m.UserProfile.user_id == user.id)
     )
     
-    update_data = {}
+    profile_picture_key = None
+    if profile_picture_file is not None and db_user.login_method == LoginMethod.PASSWORD.value:
+        if not profile_picture_file.content_type.startswith('image/'):
+            return Errors.INVALID_REQUEST
+        
+        if profile and profile.profile_picture:
+            try:
+                r.storage.delete(profile.profile_picture)
+            except Exception as e:
+                r.logger.warning(f"Failed to delete old profile picture: {profile.profile_picture}", exc_info=e)
+        
+        file_extension = profile_picture_file.filename.split('.')[-1] if '.' in profile_picture_file.filename else 'jpg'
+        profile_picture_key = f"profile_pictures/{user.id}_{str(uuid4())[:8]}.{file_extension}"
+        
+        file_content = await profile_picture_file.read()
+        r.storage.write(profile_picture_key, file_content, profile_picture_file.content_type)
+    
+    profile_update_data = {}
     if bio is not None:
-        update_data["bio"] = bio
+        profile_update_data["bio"] = bio
     if address is not None:
-        update_data["address"] = address
+        profile_update_data["address"] = address
+    if profile_picture_key is not None:
+        profile_update_data["profile_picture"] = profile_picture_key
     
     if profile is None:
+        # Tạo profile mới
         profile = await r.tx.scalar(
             insert(m.UserProfile).returning(m.UserProfile),
             dict(
@@ -183,20 +242,27 @@ async def update_user_profile(user: c.User, bio: str = None, address: str = None
                 user_id=user.id,
                 bio=bio,
                 address=address,
+                profile_picture=profile_picture_key,
             ),
         )
     else:
-        if update_data:
+        # Cập nhật profile hiện có
+        if profile_update_data:
             await r.tx.execute(
                 update(m.UserProfile)
                 .where(m.UserProfile.user_id == user.id)
-                .values(**update_data)
+                .values(**profile_update_data)
             )
-            
             await r.tx.refresh(profile)
     
+    profile_with_user = await r.tx.scalar(
+        select(m.UserProfile)
+        .options(joinedload(m.UserProfile.user))
+        .where(m.UserProfile.user_id == user.id)
+    )
+    
     await r.tx.commit()
-    return c.UserProfile.of(profile)
+    return c.UserProfile.of(profile_with_user)
 
 
 @service

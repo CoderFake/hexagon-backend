@@ -59,6 +59,11 @@ class User:
 @dataclass(config=config)
 class UserProfile:
     id: str = Field(description="Profile ID")
+    username: Optional[str] = Field(description="Username")
+    full_name: Optional[str] = Field(description="Full name")
+    email: Optional[str] = Field(description="Email")
+    phone_number: Optional[str] = Field(description="Phone number")
+    login_method: Optional[str] = Field(description="Login method")
     bio: Optional[str] = Field(description="Biography")
     address: Optional[str] = Field(description="Address")
     profile_picture: Optional[str] = Field(description="Profile picture URL")
@@ -68,15 +73,17 @@ class UserProfile:
         profile_picture_url = None
         if profile.profile_picture:
             try:
-                if profile.profile_picture.startswith('http'):
-                    profile_picture_url = profile.profile_picture
-                else:
-                    profile_picture_url = r.storage.urlize(profile.profile_picture)
-            except Exception:
+                profile_picture_url = r.storage.urlize(profile.profile_picture)
+            except Exception as e:
                 profile_picture_url = profile.profile_picture
         
         return cls(
             id=profile.id,
+            username=getattr(profile, 'username', None),
+            full_name=profile.name,
+            email=profile.email,
+            phone_number=profile.phone,
+            login_method=profile.login_method,
             bio=profile.bio,
             address=profile.address,
             profile_picture=profile_picture_url
