@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 import uuid
 
 class User(AbstractUser):
@@ -57,4 +59,18 @@ class UserProfile(models.Model):
         ordering = ['user__date_joined']
 
     def __str__(self):
-        return f"{self.user.first_name} {self.user.last_name}"
+        return f"Hồ sơ của {self.user.full_name or self.user.email}"
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Tự động tạo UserProfile khi tạo User mới"""
+    if created:
+        UserProfile.objects.get_or_create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Tự động lưu UserProfile khi lưu User"""
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
+    else:
+        UserProfile.objects.create(user=instance)

@@ -1,0 +1,11 @@
+<div class="datetime">
+    <div class="form-group">
+         <label>{{ date_label }} </label>
+        {% with widget=widget.subwidgets.0 %}{% include widget.template_name %}{% endwith %}
+    </div>
+
+    <div class="form-group">
+        <label>{{ time_label }} </label>
+        {% with widget=widget.subwidgets.1 %}{% include widget.template_name %}{% endwith %}
+    </div>
+</div>

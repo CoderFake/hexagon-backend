@@ -1,0 +1,128 @@
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.hexagon-brand {
+    font-family: 'Arial', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #2952bf;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1;
+    transition: all 0.3s ease;
+}
+
+.hexagon-brand:hover {
+    color: #4dabf7;
+    text-shadow: 0 2px 8px rgba(41, 82, 191, 0.2);
+}
+
+.hexagon-brand span {
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.hexagon-brand .letter-h { transform: translateY(-1px); }
+.hexagon-brand .letter-e { transform: translateY(1px); }
+.hexagon-brand .letter-x { transform: translateY(-1px); }
+.hexagon-brand .letter-a { transform: translateY(-2px); }
+.hexagon-brand .letter-g { transform: translateY(-1px); }
+.hexagon-brand .letter-o { transform: translateY(-1.5px); }
+.hexagon-brand .letter-n { transform: translateY(-1px); }
+
+.hexagon-brand span:hover {
+    transform: scale(1.05) translateY(-3px) !important;
+    color: #4dabf7;
+}
+
+.admin-text {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    margin-left: 4px;
+}
+
+.blur {
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.border-radius-lg {
+    border-radius: 1rem;
+}
+
+.z-index-3 {
+    z-index: 3;
+}
+
+.z-index-sticky {
+    z-index: 1020;
+}
+
+.position-sticky {
+    position: sticky;
+}
+
+.navbar-toggler {
+    border: none;
+    padding: 0.25rem 0.5rem;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+.navbar-toggler-icon {
+    background: none;
+    width: 1.5em;
+    height: 1.5em;
+    position: relative;
+}
+
+.navbar-toggler-bar {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: #495057;
+    margin: 4px 0;
+    transition: 0.3s;
+}
+
+.navbar-toggler[aria-expanded="true"] .bar1 {
+    transform: rotate(-45deg) translate(-4px, 4px);
+}
+
+.navbar-toggler[aria-expanded="true"] .bar2 {
+    opacity: 0;
+}
+
+.navbar-toggler[aria-expanded="true"] .bar3 {
+    transform: rotate(45deg) translate(-4px, -4px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2952bf 0%, #4dabf7 100%);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(41, 82, 191, 0.3);
+}
+
+@media (max-width: 991px) {
+    .hexagon-brand {
+        font-size: 1rem;
+    }
+
+    .admin-text {
+        font-size: 0.9rem;
+    }
+}

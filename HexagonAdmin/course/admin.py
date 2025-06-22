@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import *
-
+from config.admin import BaseModelAdmin
 
 class CourseContentBlockInline(admin.TabularInline):
     model = CourseContentBlock
@@ -51,7 +51,7 @@ class CourseCategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(Course)
-class CourseAdmin(admin.ModelAdmin):
+class CourseAdmin(BaseModelAdmin):
     list_display = ['title', 'category', 'order', 'is_active']
     list_filter = ['category', 'is_active']
     inlines = [
