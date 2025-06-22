@@ -19,18 +19,38 @@ class UserProfile:
     id: str
     user_id: str
     bio: Optional[str] = None
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    login_method: Optional[str] = None
     address: Optional[str] = None
     profile_picture: Optional[str] = None
+    username: Optional[str] = None
     
     @classmethod
     def of(cls, profile: db.UserProfile) -> "UserProfile":
         """Create composite UserProfile from database UserProfile"""
+        user_info = {}
+        if hasattr(profile, 'user') and profile.user:
+            user_info = {
+                'name': profile.user.full_name,
+                'email': profile.user.email,
+                'phone': profile.user.phone_number,
+                'login_method': profile.user.login_method
+            }
+        
+        username = None
+        if hasattr(profile, 'user') and profile.user:
+            username = profile.user.username
+        
         return cls(
             id=profile.id,
             user_id=profile.user_id,
             bio=profile.bio,
             address=profile.address,
-            profile_picture=profile.profile_picture
+            profile_picture=profile.profile_picture,
+            username=username,
+            **user_info
         )
 
 

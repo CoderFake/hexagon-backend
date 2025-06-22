@@ -41,6 +41,9 @@ def create_folder_structure(client, bucket_name):
         "public/roadmaps",  # Roadmap images
         "public/students",  # Student profile pics, outstanding students
         "public/materials",  # Public course materials (brochures, samples, previews)
+        
+        # User content - public access
+        "profile_pictures",  # User profile pictures - public access for display
 
         # Private folders - require authentication
         "private/documents",  # Private course documents
@@ -70,7 +73,7 @@ def create_folder_structure(client, bucket_name):
 
 
 def set_bucket_policy(client, bucket_name):
-    """Set bucket policy for public access to public folder"""
+    """Set bucket policy for public access to public folder and profile pictures"""
     try:
         policy = f'''{{
             "Version": "2012-10-17",
@@ -81,7 +84,10 @@ def set_bucket_policy(client, bucket_name):
                         "AWS": ["*"]
                     }},
                     "Action": ["s3:GetObject"],
-                    "Resource": ["arn:aws:s3:::{bucket_name}/public/*"]
+                    "Resource": [
+                        "arn:aws:s3:::{bucket_name}/public/*",
+                        "arn:aws:s3:::{bucket_name}/profile_pictures/*"
+                    ]
                 }}
             ]
         }}'''

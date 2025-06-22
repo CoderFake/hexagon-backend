@@ -1,6 +1,15 @@
 import uuid
 from django.db import models
+from django.contrib.sites.models import Site as DjangoSite
 from django.utils.translation import gettext_lazy as _
+
+class Site(DjangoSite):
+    """Proxy model cho Site để hiển thị trong config app"""
+    class Meta:
+        proxy = True
+        verbose_name = _("Site")
+        verbose_name_plural = _("Sites")
+        app_label = 'config'
 
 class BaseModel(models.Model):
     """Base model với các trường chung"""

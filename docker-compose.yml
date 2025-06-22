@@ -80,6 +80,7 @@ services:
       - STATIC__ROOT=${STATIC_ROOT}
       - STATIC__PATH=${STATIC_PATH}
       - STORAGE__URL=minio://minio:9000/${MINIO_BUCKET_NAME:-hexagon-storage}?access_key=${MINIO_ROOT_USER}&secret_key=${MINIO_ROOT_PASSWORD}&secure=false
+      - STORAGE__PUBLIC_URL=${MINIO_PUBLIC_URL:-http://localhost:9000}
       - TZ__TIMEZONE=${TIME_ZONE}
       - DOCS__ENABLED=${DOCS_ENABLED}
       - DOCS__USERNAME=${DOCS_USERNAME}

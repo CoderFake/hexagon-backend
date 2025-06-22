@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import *
+from config.admin import BaseModelAdmin
 
 
 class NewsContentBlockInline(admin.StackedInline):
@@ -8,14 +9,14 @@ class NewsContentBlockInline(admin.StackedInline):
 
 
 @admin.register(NewsCategory)
-class NewsCategoryAdmin(admin.ModelAdmin):
+class NewsCategoryAdmin(BaseModelAdmin):
     list_display = ['name', 'category_type', 'course', 'is_active']
     list_filter = ['category_type', 'course']
     prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(News)
-class NewsAdmin(admin.ModelAdmin):
+class NewsAdmin(BaseModelAdmin):
     list_display = ['title', 'category', 'is_published', 'published_at']
     list_filter = ['category', 'is_published']
     inlines = [NewsContentBlockInline]

@@ -1,4 +1,6 @@
 import app.service.account as as_
+from typing import Optional
+from fastapi import Form, File, UploadFile
 from app.api.commons import (
     APIRouter,
     Authorized,
@@ -28,12 +30,12 @@ async def signup(
     name = auth.claims.get("name", None)
     email = auth.claims.get("email", "")
     picture_url = auth.claims.get("picture", "")
-    login_method = auth.claims.get('firebase', {}).get('sign_in_provider', 'unknown')
+    sign_in_provider = auth.claims.get('firebase', {}).get('sign_in_provider', 'unknown')
 
     if name is None:
         name = email.split('@')[0]
 
-    account = (await as_.signup(login_id, name, email, login_method, picture_url)).get()
+    account = (await as_.signup(login_id, name, email, sign_in_provider, picture_url)).get()
     return vr.User.of(account)
 
 
@@ -68,13 +70,22 @@ async def get_profile(
     },
 )
 async def update_profile(
-    request: vq.UpdateProfileRequest = Body(...),
+    username: Optional[str] = Form(None),
+    full_name: Optional[str] = Form(None),
+    phone_number: Optional[str] = Form(None),
+    bio: Optional[str] = Form(None),
+    address: Optional[str] = Form(None),
+    profile_picture: Optional[UploadFile] = File(None),
     auth: Authorized = Depends(with_user),
 ) -> vr.UserProfile:
     profile = (await as_.update_user_profile(
-        auth.User, 
-        bio=request.bio, 
-        address=request.address
+        auth.User,
+        username=username,
+        full_name=full_name,
+        phone_number=phone_number,
+        profile_picture_file=profile_picture,
+        bio=bio, 
+        address=address
     )).get()
     return vr.UserProfile.of(profile)
 

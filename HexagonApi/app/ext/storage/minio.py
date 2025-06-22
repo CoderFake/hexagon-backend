@@ -16,16 +16,17 @@ try:
         def accept(cls, scheme):
             return scheme == "minio"
 
-        def __init__(self, url: ParseResult) -> None:
+        def __init__(self, url: ParseResult, public_url: str = None) -> None:
             super().__init__(url)
             q = parse_qs(url.query)
 
             self.endpoint = url.netloc
             self.bucket_name = url.path.lstrip("/")
+            self.public_url = public_url 
             
             access_key = q.get("access_key", [None])[0]
             secret_key = q.get("secret_key", [None])[0]
-            secure = q.get("secure", ["true"])[0].lower() == "true"
+            self.secure = q.get("secure", ["true"])[0].lower() == "true"
 
             if not access_key or not secret_key:
                 raise ValueError("Minio storage requires access_key and secret_key in URL query parameters")
@@ -34,7 +35,7 @@ try:
                 endpoint=self.endpoint,
                 access_key=access_key,
                 secret_key=secret_key,
-                secure=secure
+                secure=self.secure
             )
 
             self._ensure_bucket_exists()
@@ -115,8 +116,11 @@ try:
 
         def get_public_url(self, path: str) -> str:
             """Get public URL for object (if bucket is public)"""
-            protocol = "https" if self.client._is_ssl else "http"
-            return f"{protocol}://{self.endpoint}/{self.bucket_name}/{path}"
+            if self.public_url:
+                return f"{self.public_url.rstrip('/')}/{self.bucket_name}/{path}"
+            else:
+                protocol = "https" if self.secure else "http"
+                return f"{protocol}://{self.endpoint}/{self.bucket_name}/{path}"
 
 except ImportError as e:
     logger.error(f"Minio library not available: {e}")

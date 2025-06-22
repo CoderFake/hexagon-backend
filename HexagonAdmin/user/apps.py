@@ -5,3 +5,4 @@ class UserConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'user'
     verbose_name = "Quản lý người dùng"
+    icon = 'fa fa-user'

@@ -1,0 +1,396 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+.config-section {
+    background: #fff;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.config-section h3 {
+    color: #417690;
+    border-bottom: 2px solid #e1e4e8;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #e1e4e8;
+    border-radius: 4px;
+}
+
+.setting-row:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.setting-key {
+    font-weight: bold;
+    min-width: 200px;
+    color: #2c3e50;
+}
+
+.setting-value {
+    flex: 1;
+    margin: 0 15px;
+}
+
+.setting-actions {
+    min-width: 100px;
+}
+
+.btn-config {
+    background: #417690;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0 2px;
+}
+
+.btn-config:hover {
+    background: #2c5aa0;
+}
+
+.btn-danger {
+    background: #dc3545;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.quick-add-form {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+}
+
+.form-group {
+    flex: 1;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.current-site {
+    background: #28a745;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    margin-left: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Thống kê tổng quan -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ settings|length }}</div>
+        <div class="stat-label">Cấu hình hệ thống</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ all_sites|length }}</div>
+        <div class="stat-label">Sites đang quản lý</div>
+    </div>
+    {% if contact_info %}
+    <div class="stat-card">
+        <div class="stat-value">1</div>
+        <div class="stat-label">Thông tin liên hệ</div>
+    </div>
+    {% endif %}
+    <div class="stat-card">
+        <div class="stat-value">{{ current_site.domain }}</div>
+        <div class="stat-label">Site hiện tại</div>
+    </div>
+</div>
+
+<!-- Quản lý Sites -->
+<div class="config-section">
+    <h3>🌐 Quản lý Sites</h3>
+    <div class="setting-row">
+        <div class="setting-key">Site hiện tại</div>
+        <div class="setting-value">
+            <strong>{{ current_site.name }}</strong> ({{ current_site.domain }})
+            <span class="current-site">Đang hoạt động</span>
+        </div>
+        <div class="setting-actions">
+            <a href="{% url 'admin:sites_site_change' current_site.id %}" class="btn-config">Chỉnh sửa</a>
+        </div>
+    </div>
+    
+    {% for site in all_sites %}
+        {% if site.id != current_site.id %}
+        <div class="setting-row">
+            <div class="setting-key">{{ site.name }}</div>
+            <div class="setting-value">{{ site.domain }}</div>
+            <div class="setting-actions">
+                <a href="{% url 'admin:sites_site_change' site.id %}" class="btn-config">Chỉnh sửa</a>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+    
+    <div style="text-align: center; margin-top: 15px;">
+        <a href="{% url 'admin:sites_site_add' %}" class="btn-config">➕ Thêm Site mới</a>
+        <a href="{% url 'admin:sites_site_changelist' %}" class="btn-config">📋 Xem tất cả Sites</a>
+    </div>
+</div>
+
+<!-- Form thêm nhanh setting -->
+<div class="config-section">
+    <h3>🚀 Thêm nhanh cấu hình</h3>
+    <div class="quick-add-form">
+        <form method="post" id="quick-add-form">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Key:</label>
+                    <input type="text" name="new_key" placeholder="vd: site_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Value:</label>
+                    <input type="text" name="new_value" placeholder="vd: Hexagon Education" required>
+                </div>
+                <div class="form-group">
+                    <label>Loại:</label>
+                    <select name="new_data_type">
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                        <option value="boolean">Boolean</option>
+                        <option value="json">JSON</option>
+                        <option value="url">URL</option>
+                        <option value="email">Email</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-config">Thêm</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Danh sách settings hiện tại -->
+<div class="config-section">
+    <h3>⚙️ Cấu hình hệ thống</h3>
+    {% if settings %}
+        <form method="post">
+            {% csrf_token %}
+            {% for setting in settings %}
+                <div class="setting-row" data-key="{{ setting.key }}">
+                    <div class="setting-key">
+                        {{ setting.key }}
+                        <small style="display: block; color: #666;">{{ setting.data_type }}</small>
+                    </div>
+                    <div class="setting-value">
+                        {% if setting.data_type == 'boolean' %}
+                            <select name="setting_{{ setting.key }}" class="setting-input">
+                                <option value="true" {% if setting.value == 'true' %}selected{% endif %}>True</option>
+                                <option value="false" {% if setting.value == 'false' %}selected{% endif %}>False</option>
+                            </select>
+                        {% elif setting.data_type == 'json' %}
+                            <textarea name="setting_{{ setting.key }}" rows="3" class="setting-input">{{ setting.value }}</textarea>
+                        {% else %}
+                            <input type="text" name="setting_{{ setting.key }}" value="{{ setting.value }}" class="setting-input">
+                        {% endif %}
+                        {% if setting.description %}
+                            <small style="display: block; color: #666; margin-top: 5px;">{{ setting.description }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="setting-actions">
+                        <button type="button" class="btn-config btn-update" data-key="{{ setting.key }}">Cập nhật</button>
+                    </div>
+                </div>
+            {% endfor %}
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="submit" class="btn-config" style="padding: 10px 30px; font-size: 16px;">
+                    💾 Lưu tất cả thay đổi
+                </button>
+            </div>
+        </form>
+    {% else %}
+        <p>Chưa có cấu hình nào. Sử dụng form bên trên để thêm cấu hình đầu tiên.</p>
+    {% endif %}
+</div>
+
+<!-- Thông tin liên hệ -->
+{% if contact_info %}
+<div class="config-section">
+    <h3>📞 Thông tin liên hệ</h3>
+    <div class="setting-row">
+        <div class="setting-key">Email</div>
+        <div class="setting-value">{{ contact_info.email }}</div>
+        <div class="setting-actions">
+            <a href="{% url 'admin:config_contactinfo_change' contact_info.id %}" class="btn-config">Sửa</a>
+        </div>
+    </div>
+    <div class="setting-row">
+        <div class="setting-key">Điện thoại</div>
+        <div class="setting-value">{{ contact_info.phone }}</div>
+    </div>
+    <div class="setting-row">
+        <div class="setting-key">Địa chỉ</div>
+        <div class="setting-value">{{ contact_info.address|truncatewords:10 }}</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Links nhanh -->
+<div class="config-section">
+    <h3>🔗 Liên kết nhanh</h3>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{% url 'admin:sites_site_changelist' %}" class="btn-config">🌐 Quản lý Sites</a>
+        <a href="{% url 'admin:config_sitesettings_changelist' %}" class="btn-config">Quản lý Settings</a>
+        <a href="{% url 'admin:config_banner_changelist' %}" class="btn-config">Quản lý Banner</a>
+        <a href="{% url 'admin:config_faq_changelist' %}" class="btn-config">Quản lý FAQ</a>
+        <a href="{% url 'admin:config_contactinquiry_changelist' %}" class="btn-config">Liên hệ tư vấn</a>
+        {% if contact_info %}
+            <a href="{% url 'admin:config_contactinfo_change' contact_info.id %}" class="btn-config">Sửa thông tin liên hệ</a>
+        {% else %}
+            <a href="{% url 'admin:config_contactinfo_add' %}" class="btn-config">Thêm thông tin liên hệ</a>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Xử lý form thêm nhanh
+    document.getElementById('quick-add-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const key = formData.get('new_key');
+        const value = formData.get('new_value');
+        const dataType = formData.get('new_data_type');
+        
+        // Tạo setting mới
+        fetch('{% url "admin:quick_settings_api" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                key: key,
+                value: value,
+                data_type: dataType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Lỗi: ' + data.error);
+            }
+        });
+    });
+    
+    // Xử lý cập nhật từng setting
+    document.querySelectorAll('.btn-update').forEach(button => {
+        button.addEventListener('click', function() {
+            const key = this.dataset.key;
+            const row = this.closest('.setting-row');
+            const input = row.querySelector('.setting-input');
+            const value = input.value;
+            
+            fetch('{% url "admin:quick_settings_api" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    key: key,
+                    value: value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.textContent = '✓ Đã lưu';
+                    this.style.background = '#28a745';
+                    setTimeout(() => {
+                        this.textContent = 'Cập nhật';
+                        this.style.background = '#417690';
+                    }, 2000);
+                } else {
+                    alert('Lỗi: ' + data.error);
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

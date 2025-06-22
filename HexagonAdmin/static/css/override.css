@@ -1,0 +1,363 @@
+.card-body .module.aligned label{
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.wide label {
+    width: auto !important;
+}
+
+.form-check-label{
+    display: flex !important;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+}
+
+form .related-widget-wrapper ul {
+    display: inline-block;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.related-widget-wrapper{
+    display: flex !important;
+    flex-direction: row;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.vCheckboxLabel{
+    margin: 0;
+}
+.table .form-check{
+    padding-left: 0;
+}
+td.field-is_staff, td.field-is_active,td.field-is_superuser, td.field-phone_number{
+    text-align: center;
+}
+input[name="is_active"], input[name="is_staff"], input[name="is_superuser"] {
+    width: 50px;
+    height: 24px;
+    appearance: none;
+    background-color: #ccc;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: 0.3s;
+    position: relative;
+}
+
+input[name="is_active"]:checked, input[name="is_staff"]:checked, input[name="is_superuser"]:checked {
+    background-color: #28a745;
+}
+
+input[name="is_active"]::before, input[name="is_staff"]::before, input[name="is_superuser"]::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+input[name="is_active"]:checked::before, input[name="is_staff"]:checked::before, input[name="is_superuser"]:checked::before {
+    transform: translateX(26px);
+}
+input[name="is_active"]:focus, input[name="is_staff"]:focus, input[name="is_superuser"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.5);
+}
+
+.vURLField, .vTextField, .vLargeTextField, .vXMLLargeTextField {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.vURLField:focus, .vTextField:focus .vLargeTextField:focus, .vXMLLargeTextField:focus {
+    color: #212529;
+    background-color: #fff;
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.vURLField:disabled,.vTextField:disabled, .vLargeTextField:disabled, .vXMLLargeTextField:disabled {
+    background-color: #e9ecef;
+    opacity: 1;
+}
+
+.module.aligned select {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.module.aligned select:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+.datetime {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    padding: 8px;
+    margin: 0 10px !important;
+    font-size: 13px;
+}
+
+.datetime #text{
+    padding-bottom: 8px;
+}
+
+.datetime br {
+    display: none !important;
+}
+
+.calendarbox.module, .clockbox.module{
+    left: auto !important;
+    right: 30px !important;
+
+}
+.clockbox h2{
+    background: #5e72e4 !important;
+}
+
+.vDateField, .vTimeField {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.vDateField {
+    width: 120px;
+}
+
+.vTimeField {
+    width: 80px;
+}
+
+.datetimeshortcuts {
+    margin-left: 5px;
+    display: flex !important;
+    flex-direction: row;
+    margin-bottom: 8px;
+}
+
+.datetimeshortcuts a {
+    color: #007cba;
+    text-decoration: none;
+    font-size: 12px;
+    margin: 0 2px;
+}
+
+.datetimeshortcuts a:hover {
+    text-decoration: underline;
+}
+
+.date-icon, .clock-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-size: contain;
+    vertical-align: middle;
+}
+
+.datetimeshortcuts .date-icon::before {
+    content: "📅" !important;
+}
+
+.datetimeshortcuts .clock-icon::before {
+    content: "🕐" !important;
+}
+
+@media (max-width: 600px) {
+    .datetime {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+
+.card.submit_btn{
+    box-shadow: none;
+    background: none;
+}
+
+.card.submit_btn .card-body{
+    padding: 0;
+}
+
+
+.filter_card_header {
+    border-radius: 10px 10px 0 0;
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    user-select: none;
+    z-index: 1050;
+}
+
+.filter_card_header:hover {
+    transform: translateY(-2px);
+}
+
+.filter_card_header h5 {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter_card_header .filter-arrow {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.filter_card_header.collapsed .filter-arrow {
+    transform: rotate(-90deg);
+}
+
+.card-body.filter-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    padding: 0 20px;
+    background: #f8f9fa;
+    border-radius: 0 0 10px 10px;
+    position: relative;
+    z-index: 1100;
+}
+
+.card-body.filter-body.show {
+    max-height: 500px;
+    padding: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.table-wrapper {
+    position: relative;
+    z-index: 1000;
+    margin-top: 20px;
+}
+
+/* Styling cho các filter specs */
+.filter-spec {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.filter-spec:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.filter-spec h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 5px;
+}
+
+.filter-spec ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.filter-spec li {
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 5px;
+    transition: all 0.2s ease;
+}
+
+.filter-spec li:hover {
+    background: #e9ecef;
+    padding-left: 16px;
+}
+
+.filter-spec li.selected {
+    background: #63b3ed;
+    color: white;
+    font-weight: 500;
+}
+
+.filter-spec li a {
+    text-decoration: none;
+    display: block;
+    width: 100%;
+}
+
+/* Animation */
+.fade-in {
+    animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filter_card_header {
+        padding: 12px 15px;
+    }
+
+    .card-body.filter-body.show {
+        padding: 15px;
+    }
+
+    .filter-spec {
+        margin-bottom: 10px;
+        padding: 8px;
+    }
+}

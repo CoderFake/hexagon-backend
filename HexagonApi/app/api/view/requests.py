@@ -4,7 +4,7 @@ from typing import Optional
 from decimal import Decimal
 from app.api.shared.errors import abort
 from app.model.errors import Errors
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 from typing_extensions import Self
@@ -12,9 +12,12 @@ from http import HTTPStatus
 
 
 class UpdateProfileRequest(BaseModel):
-    """Update profile request"""
-    bio: Optional[str] = None
-    address: Optional[str] = None
+    """Update profile request - for form data without file"""
+    username: Optional[str] = Field(None, description="Username (cannot change email)")
+    full_name: Optional[str] = Field(None, description="Full name")
+    phone_number: Optional[str] = Field(None, description="Phone number")
+    bio: Optional[str] = Field(None, description="Biography")
+    address: Optional[str] = Field(None, description="Address")
 
 
 # ================================================================

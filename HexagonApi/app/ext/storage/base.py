@@ -6,6 +6,7 @@ import os
 
 class StorageSettings(BaseModel):
     url: str = Field(default="file://./uploads", description="URL with storage access information.")
+    public_url: Optional[str] = Field(default=None, description="Public URL for accessing files from frontend.")
 
 
 class Storage:
@@ -18,18 +19,24 @@ class Storage:
         Storage._children.add(cls)
 
     @staticmethod
-    def of(url) -> Optional['Storage']:
+    def of(url, public_url: str = None) -> Optional['Storage']:
         """
         Generates an instance of the appropriate type determined from the URL scheme.
 
         Args:
             url: URL containing access information.
+            public_url: Public URL for accessing files.
         Returns:
             Storage access object.
         """
         parsed = urlparse(url)
         s = next(filter(lambda s: s.accept(parsed.scheme), Storage._children), None)
-        return s(parsed) if s else None
+        if s:
+            try:
+                return s(parsed, public_url=public_url)
+            except TypeError:
+                return s(parsed)
+        return None
 
     @classmethod
     def accept(cls, scheme: str) -> bool:
