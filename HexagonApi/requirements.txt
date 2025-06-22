@@ -13,12 +13,13 @@ asyncpg==0.28.0
 pydantic==2.0.3
 pydantic-settings==2.0.2
 email-validator==2.0.0
+PyYAML>=5.1
 
 # Authentication & Security
 python-jose==3.3.0
 passlib==1.7.4
 bcrypt==4.0.1
-PyJWT==2.4.0
+PyJWT>=2.5.0
 cryptography==43.0.0
 
 # File Upload

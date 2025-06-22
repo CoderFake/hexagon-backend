@@ -50,7 +50,12 @@ try:
 
         def write(self, path, data, public=False):
             buf = BytesIO(data)
-            self.client.upload_fileobj(buf, self.bucket, path)
+            extra_args = {}
+            
+            if path.startswith("profile_pictures/") or public:
+                extra_args['ACL'] = 'public-read'
+                
+            self.client.upload_fileobj(buf, self.bucket, path, ExtraArgs=extra_args)
 
         def delete(self, path):
             self.client.delete_object(
@@ -58,7 +63,12 @@ try:
                 Key=path,
             )
 
-        def urlize(self, path, expiration=3600, public=False, **kwargs):
+        def urlize(self, path, expiration=3600, public=None, **kwargs):
+            if path.startswith("profile_pictures/"):
+                public = True
+            elif public is None:
+                public = False
+                
             if public:
                 return f"https://{self.bucket}.s3.amazonaws.com/{path}"
             else:

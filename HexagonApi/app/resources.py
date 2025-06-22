@@ -24,6 +24,7 @@ from app.ext.firebase.base import (
     FirebaseAuthSettings,
 )
 from app.ext.storage.base import Storage
+from app.ext.email.base import GmailEmailService
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -46,6 +47,7 @@ class Resources:
     db: AsyncEngine
     storage: Storage
     firebase: Union[FirebaseAuth, FirebaseAdmin]
+    email: GmailEmailService
     logger: logging.Logger
 
     def open(self) -> "ResourceSession":
@@ -54,6 +56,7 @@ class Resources:
             db=async_sessionmaker(self.db, expire_on_commit=False)(),
             storage=self.storage,
             firebase=self.firebase,
+            email=self.email,
             logger=self.logger,
         )
 
@@ -64,6 +67,7 @@ class ResourceSession(Closeable):
     db: AsyncSession
     storage: Storage
     firebase: Union[FirebaseAuth, FirebaseAdmin]
+    email: GmailEmailService
     logger: logging.Logger
 
     @property
@@ -126,22 +130,31 @@ async def configure(
     if settings.db.echo:
         engine.echo = True
 
+    import app.ext.storage.local
     import app.ext.storage.s3
+    import app.ext.storage.minio
 
+    logger.info(f"Storage URL from settings: {settings.storage.url}")
     storage = Storage.of(settings.storage.url)
     if storage is None:
         raise ValueError(f"Invalid URL for storage: {settings.storage.url}")
+    
+    logger.info(f"Storage initialized: {type(storage).__name__}")
 
     firebase = (
         FirebaseAuth(settings.firebase)
         if isinstance(settings.firebase, FirebaseAuthSettings)
         else FirebaseAdmin(settings.firebase)
     )
+    
+    email_service = GmailEmailService(settings.email)
+    logger.info(f"Email service initialized with host: {settings.email.host}")
 
     resources = Resources(
         db=engine,
         storage=storage,
         firebase=firebase,
+        email=email_service,
         logger=logger,
     )
 
@@ -153,7 +166,7 @@ async def configure(
         async with session:
             try:
                 return await next(session)
-            except:  # noqa: E722
+            except:
                 session.fail()
                 raise
             finally:

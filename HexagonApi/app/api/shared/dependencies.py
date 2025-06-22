@@ -27,22 +27,46 @@ class URLFor:
         return f"{scheme}://{netloc}/{script}/{path}"
 
     def storage(self, path: str) -> str:
+        """
+        Generate public URL for storage files
+        
+        Args:
+            path: Storage file path
+        Returns:
+            Public URL for the file
+        """
         from app.config import environment
         from app.resources import context as r
 
-        static = environment().settings.static
         storage_url = environment().settings.storage.url
-
-        if storage_url.startswith("s3://"):
-            s3_url = environment().settings.storage.url
-            parsed_url = urlparse(s3_url)
-            s3_storage = S3Storage(parsed_url)
-
-            return s3_storage.urlize(path)
-        else:
+        parsed_url = urlparse(storage_url)
+        
+        if parsed_url.scheme == "s3":
+            try:
+                return r.storage.urlize(path, public=True)
+            except:
+                bucket = parsed_url.path.lstrip("/")
+                return f"https://{bucket}.s3.amazonaws.com/{path}"
+                
+        elif parsed_url.scheme == "minio":
+            try:
+                return r.storage.urlize(path)
+            except:
+                endpoint = parsed_url.netloc
+                bucket = parsed_url.path.lstrip("/")
+                protocol = "https" if parsed_url.query and "secure=true" in parsed_url.query else "http"
+                return f"{protocol}://{endpoint}/{bucket}/{path}"
+                
+        elif parsed_url.scheme == "file":
+            static = environment().settings.static
             if static:
-                static_path = static.path + "/"
+                static_path = static.path.rstrip("/")
+                return self(f"{static_path}/{path}")
             else:
-                static_path = "/"
-
-            return r.storage.urlize(path, root=self(static_path))
+                return self(f"static/{path}")
+                
+        else:
+            try:
+                return r.storage.urlize(path)
+            except:
+                return self(f"static/{path}")

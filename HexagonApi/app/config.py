@@ -106,22 +106,23 @@ class Environment:
     @cached_property
     def settings(self) -> ApplicationSettings:
         """
-        Load application settings from .env file in project root.
+        Load application settings from environment variables or .env file.
         """
         if not self.env_file.exists():
-            raise FileNotFoundError(f"Environment file not found: {self.env_file}")
-        
-        local_env = self.env_file.with_suffix(".env.local")
-        
-        env_files = [str(self.env_file)]
-        if local_env.exists():
-            env_files.append(str(local_env))
+            settings = ApplicationSettings(
+                _env_nested_delimiter=self.delimiter,
+            )
+        else:
+            local_env = self.env_file.with_suffix(".env.local")
+            
+            env_files = [str(self.env_file)]
+            if local_env.exists():
+                env_files.append(str(local_env))
 
-        settings = ApplicationSettings(
-            _env_file=env_files,
-            _env_nested_delimiter=self.delimiter,
-        )
-        
+            settings = ApplicationSettings(
+                _env_file=env_files,
+                _env_nested_delimiter=self.delimiter,
+            )
         self._configure_for_environment(settings)
         
         return settings
@@ -174,3 +175,19 @@ def settings() -> ApplicationSettings:
     Get application settings (shortcut function).
     """
     return environment().settings
+
+
+@lru_cache
+def root_package() -> str:
+    """
+    Get the root package name.
+    """
+    return "HexagonApi"
+
+
+@lru_cache 
+def app_env() -> str:
+    """
+    Get the environment variable name for app environment.
+    """
+    return "ENV"

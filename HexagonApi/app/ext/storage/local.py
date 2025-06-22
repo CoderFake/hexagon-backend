@@ -39,5 +39,5 @@ class LocalStorage(Storage):
     def delete(self, path: str):
         os.remove(self._on(path))
 
-    def urlize(self, path: str, root: str, **kwargs) -> str:
+    def urlize(self, path: str, root: str = "/static/uploads/", **kwargs) -> str:
         return urljoin(root, path)

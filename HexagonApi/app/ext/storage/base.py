@@ -1,10 +1,11 @@
 from typing import Type, Optional
 from urllib.parse import urlparse, ParseResult
 from pydantic import BaseModel, Field
+import os
 
 
 class StorageSettings(BaseModel):
-    url: str = Field(description="URL with storage access information.")
+    url: str = Field(default="file://./uploads", description="URL with storage access information.")
 
 
 class Storage:
