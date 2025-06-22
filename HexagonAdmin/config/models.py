@@ -91,3 +91,32 @@ class Banner(BaseModel):
 
     def __str__(self):
         return self.title
+
+class ContactInquiry(BaseModel):
+    """Liên hệ tư vấn"""
+    full_name = models.CharField(max_length=255, verbose_name=_("Họ tên"))
+    phone = models.CharField(max_length=20, verbose_name=_("Số điện thoại"))
+    email = models.EmailField(blank=True, verbose_name=_("Email"))
+    course = models.ForeignKey('course.Course', blank=True, null=True, on_delete=models.CASCADE, verbose_name=_("Khóa học quan tâm"))
+    course_class = models.ForeignKey('course.CourseClass', blank=True, null=True, on_delete=models.CASCADE, verbose_name=_("Lớp học quan tâm"))
+    message = models.TextField(blank=True, verbose_name=_("Tin nhắn"))
+    inquiry_type = models.CharField(max_length=50, default='course_inquiry', choices=[
+        ('course_inquiry', 'Tư vấn khóa học'),
+        ('general_contact', 'Liên hệ chung'),
+    ], verbose_name=_("Loại liên hệ"))
+    status = models.CharField(max_length=20, default='new', choices=[
+        ('new', 'Mới'),
+        ('contacted', 'Đã liên hệ'),
+        ('converted', 'Đã chuyển đổi'),
+        ('closed', 'Đã đóng'),
+    ], verbose_name=_("Trạng thái"))
+    notes = models.TextField(blank=True, verbose_name=_("Ghi chú admin"))
+
+    class Meta:
+        db_table = 'contact_inquiry'
+        verbose_name = _("Liên hệ tư vấn")
+        verbose_name_plural = _("Liên hệ tư vấn")
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.full_name} - {self.phone}"

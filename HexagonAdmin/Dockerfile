@@ -13,6 +13,7 @@ RUN apt-get update \
         curl \
         postgresql-client \
         gettext \
+        wait-for-it \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -21,16 +22,13 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 COPY . .
 
-RUN mkdir -p logs static media
+RUN mkdir -p logs static media staticfiles
 
-RUN python manage.py collectstatic --noinput
-
-RUN python manage.py makemigrations
-
-RUN python manage.py migrate
-
-RUN python manage.py shell < create_superuser_and_site.py
+RUN chmod +x /app/start.sh
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "guicorn main:app --host 0.0.0.0 --port 8000 --workers 4"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/admin/ || exit 1
+
+CMD ["./start.sh"]

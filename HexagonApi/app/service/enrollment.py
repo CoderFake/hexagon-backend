@@ -19,6 +19,7 @@ async def get_user_enrollments(
 ) -> Maybe[tuple[List[c.StudentEnrollment], int]]:
     """Get user's enrollments with pagination"""
     query = select(m.StudentCourseEnrollment).options(
+        joinedload(m.StudentCourseEnrollment.user),
         joinedload(m.StudentCourseEnrollment.course).joinedload(m.Course.category),
         joinedload(m.StudentCourseEnrollment.course_class)
     ).where(
@@ -57,6 +58,7 @@ async def get_user_enrollments(
 async def get_enrollment_by_id(enrollment_id: str, user: c.User) -> Maybe[c.StudentEnrollment]:
     """Get enrollment by ID for specific user"""
     query = select(m.StudentCourseEnrollment).options(
+        joinedload(m.StudentCourseEnrollment.user),
         joinedload(m.StudentCourseEnrollment.course).joinedload(m.Course.category),
         joinedload(m.StudentCourseEnrollment.course_class)
     ).where(
@@ -138,7 +140,7 @@ async def enroll_by_class_code(
         course_class_id=course_class.id,
         enrollment_date=date.today(),
         enrollment_method=m.EnrollmentMethodEnum.CLASS_CODE,
-        status=m.EnrollmentStatusEnum.ENROLLED,
+        status=m.EnrollmentStatusEnum.PENDING,
         tuition_fee=tuition_fee,
         paid_amount=Decimal(0),
         payment_status=m.PaymentStatusEnum.UNPAID,
@@ -151,17 +153,14 @@ async def enroll_by_class_code(
     await r.tx.commit()
     await r.tx.refresh(enrollment)
     
-    await r.tx.refresh(enrollment, ['course', 'course_class', 'user'])
+    await r.tx.refresh(enrollment, ['user', 'course', 'course_class'])
     
-    # Convert to composite and send emails
     enrollment_composite = c.StudentEnrollment.of(enrollment)
     
-    # Send notification emails (admin + student welcome)
     try:
         await send_enrollment_notifications(enrollment_composite)
     except Exception as e:
         print(f"Failed to send enrollment emails: {e}")
-        # Don't fail the enrollment if email fails
     
     return enrollment_composite
 
@@ -212,7 +211,7 @@ async def submit_online_enrollment(
         course_class_id=course_class.id,
         enrollment_date=date.today(),
         enrollment_method=m.EnrollmentMethodEnum.ONLINE_FORM,
-        status=m.EnrollmentStatusEnum.ENROLLED,
+        status=m.EnrollmentStatusEnum.PENDING,
         tuition_fee=tuition_fee,
         paid_amount=Decimal(0),
         payment_status=m.PaymentStatusEnum.UNPAID,
@@ -226,16 +225,13 @@ async def submit_online_enrollment(
     await r.tx.commit()
     await r.tx.refresh(enrollment)
     
-    await r.tx.refresh(enrollment, ['course', 'course_class', 'user'])
+    await r.tx.refresh(enrollment, ['user', 'course', 'course_class'])
     
-    # Convert to composite and send emails
     enrollment_composite = c.StudentEnrollment.of(enrollment)
     
-    # Send notification emails (admin + student welcome)
     try:
         await send_enrollment_notifications(enrollment_composite)
     except Exception as e:
         print(f"Failed to send enrollment emails: {e}")
-        # Don't fail the enrollment if email fails
     
     return enrollment_composite 

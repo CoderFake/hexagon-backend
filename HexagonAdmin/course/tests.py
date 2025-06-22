@@ -1,4 +1,4 @@
-from utils import SlugConverter
+from config.utils import SlugConverter
 
 if __name__ == "__main__":
     converter = SlugConverter()

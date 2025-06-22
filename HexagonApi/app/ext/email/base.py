@@ -22,9 +22,9 @@ class SendEmailSettings(BaseModel):
     
     host: str = Field(default="smtp.gmail.com", description="SMTP server host")
     port: int = Field(default=587, description="SMTP server port")
-    username: str = Field(description="Gmail username/email")
-    password: str = Field(description="Gmail app password")
-    from_email: str = Field(description="Default sender email")
+    username: str = Field(default="", description="Gmail username/email")
+    password: str = Field(default="", description="Gmail app password")
+    from_email: str = Field(default="info@hexagon.edu.vn", description="Default sender email")
     from_name: str = Field(default="Hexagon Education", description="Default sender name")
     template_dir: str = Field(default="app/templates/email", description="Email templates directory")
     static_dir: str = Field(default="app/static/email", description="Email static files directory")

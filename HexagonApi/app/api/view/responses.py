@@ -59,14 +59,12 @@ class User:
 @dataclass(config=config)
 class UserProfile:
     id: str = Field(description="Profile ID")
-    full_name: str = Field(description="Full name")
     bio: Optional[str] = Field(description="Biography")
     address: Optional[str] = Field(description="Address")
     profile_picture: Optional[str] = Field(description="Profile picture URL")
 
     @classmethod
     def of(cls, profile: c.UserProfile) -> Self:
-        
         profile_picture_url = None
         if profile.profile_picture:
             try:
@@ -79,7 +77,6 @@ class UserProfile:
         
         return cls(
             id=profile.id,
-            full_name=profile.full_name,
             bio=profile.bio,
             address=profile.address,
             profile_picture=profile_picture_url
@@ -100,7 +97,7 @@ class ContentBlock:
     order: int = Field(description="Display order")
 
     @classmethod
-    def from_course_content(cls, block) -> Self:
+    def from_course_content(cls, block: c.CourseContentBlock) -> Self:
         return cls(
             id=block.id,
             title=block.title,
@@ -111,7 +108,7 @@ class ContentBlock:
         )
 
     @classmethod
-    def from_roadmap_content(cls, block) -> Self:
+    def from_roadmap_content(cls, block: c.RoadmapContentBlock) -> Self:
         return cls(
             id=block.id,
             title=block.title,
@@ -122,7 +119,7 @@ class ContentBlock:
         )
 
     @classmethod
-    def from_additional_content(cls, block) -> Self:
+    def from_additional_content(cls, block: c.CourseAdditionalContentBlock) -> Self:
         return cls(
             id=block.id,
             title=block.title,
@@ -269,7 +266,7 @@ class CourseClass:
             image_key=course_class.image_key,
             address=course_class.address,
             schedule_description=course_class.schedule_description,
-            learning_method=course_class.learning_method.value,
+            learning_method=course_class.learning_method,
             class_code=course_class.class_code,
             current_students_count=course_class.current_students_count,
             max_students=course_class.max_students,
@@ -277,7 +274,7 @@ class CourseClass:
             can_enroll=course_class.can_enroll(),
             content_blocks=[
                 ContentBlock.from_course_content(block)
-                for block in course_class.get_active_content_blocks()
+                for block in course_class.content_blocks if block.is_active
             ]
         )
 
@@ -289,7 +286,7 @@ class Course:
     slug: str = Field(description="URL slug")
     short_description: str = Field(description="Short description")
     image_key: Optional[str] = Field(description="Course image key")
-    category: CourseCategory = Field(description="Course category")
+    category: Optional[CourseCategory] = Field(description="Course category")
     classes: List[CourseClass] = Field(description="Course classes")
     files: List[CourseFile] = Field(description="Course files")
     outstanding_students: List[OutstandingStudent] = Field(description="Outstanding students")
@@ -308,7 +305,7 @@ class Course:
             slug=course.slug,
             short_description=course.short_description,
             image_key=course.image_key,
-            category=CourseCategory.of(course.category),
+            category=CourseCategory.of(course.category) if course.category else None,
             classes=[CourseClass.of(cls) for cls in course.classes if cls.is_active],
             files=[CourseFile.of(file, user) for file in course.files if file.is_active],
             outstanding_students=[
@@ -329,7 +326,7 @@ class CourseSummary:
     slug: str = Field(description="URL slug")
     short_description: str = Field(description="Short description")
     image_key: Optional[str] = Field(description="Course image key")
-    category: CourseCategory = Field(description="Course category")
+    category: Optional[CourseCategory] = Field(description="Course category")
     total_classes_count: int = Field(description="Total classes count")
 
     @classmethod
@@ -340,7 +337,7 @@ class CourseSummary:
             slug=course.slug,
             short_description=course.short_description,
             image_key=course.image_key,
-            category=CourseCategory.of(course.category),
+            category=CourseCategory.of(course.category) if course.category else None,
             total_classes_count=course.get_total_classes_count()
         )
 
@@ -372,18 +369,18 @@ class StudentEnrollment:
     def of(cls, enrollment: c.StudentEnrollment) -> Self:
         return cls(
             id=enrollment.id,
-            course_title=enrollment.course.title,
-            class_title=enrollment.course_class.title,
-            class_code=enrollment.course_class.class_code,
+            course_title=enrollment.course.title if enrollment.course else "N/A",
+            class_title=enrollment.course_class.title if enrollment.course_class else "N/A",
+            class_code=enrollment.course_class.class_code if enrollment.course_class else "N/A",
             enrollment_date=enrollment.enrollment_date,
             start_date=enrollment.start_date,
             end_date=enrollment.end_date,
-            status=enrollment.status.value,
+            status=enrollment.status,
             status_display=enrollment.status_display,
             tuition_fee=enrollment.tuition_fee,
             paid_amount=enrollment.paid_amount,
             remaining_fee=enrollment.remaining_fee,
-            payment_status=enrollment.payment_status.value,
+            payment_status=enrollment.payment_status,
             payment_status_display=enrollment.payment_status_display,
             payment_percentage=enrollment.payment_percentage,
             final_grade=enrollment.final_grade
@@ -436,7 +433,7 @@ class NewsCategory:
             name=category.name,
             slug=category.slug,
             description=category.description,
-            category_type=category.category_type.value,
+            category_type=category.category_type,
             category_type_display=category.category_type_display,
             order=category.order,
             published_news_count=category.get_published_news_count()
@@ -474,7 +471,7 @@ class News:
     published_at: Optional[datetime] = Field(description="Published date")
     view_count: int = Field(description="View count")
     is_recently_published: bool = Field(description="Recently published flag")
-    category: NewsCategory = Field(description="News category")
+    category: Optional[NewsCategory] = Field(description="News category")
     content_blocks: List[NewsContentBlock] = Field(description="Content blocks")
 
     @classmethod
@@ -488,7 +485,7 @@ class News:
             published_at=news.published_at,
             view_count=news.view_count,
             is_recently_published=news.is_recently_published,
-            category=NewsCategory.of(news.category),
+            category=NewsCategory.of(news.category) if news.category else None,
             content_blocks=[
                 NewsContentBlock.of(block)
                 for block in news.get_active_content_blocks()
@@ -507,7 +504,7 @@ class NewsSummary:
     published_at: Optional[datetime] = Field(description="Published date")
     view_count: int = Field(description="View count")
     is_recently_published: bool = Field(description="Recently published flag")
-    category: NewsCategory = Field(description="News category")
+    category: Optional[NewsCategory] = Field(description="News category")
 
     @classmethod
     def of(cls, news: c.News) -> Self:
@@ -520,7 +517,7 @@ class NewsSummary:
             published_at=news.published_at,
             view_count=news.view_count,
             is_recently_published=news.is_recently_published,
-            category=NewsCategory.of(news.category)
+            category=NewsCategory.of(news.category) if news.category else None
         )
 
 

@@ -10,9 +10,10 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name=_("ID"))
     username = models.CharField(max_length=150, unique=True, verbose_name=_("Tên đăng nhập"))
     email = models.EmailField(unique=True, verbose_name=_("Địa chỉ email"))
-    first_name = models.CharField(max_length=150, verbose_name=_("Họ"))
-    last_name = models.CharField(max_length=150, verbose_name=_("Tên"))
-    password = models.CharField(max_length=128, verbose_name=_("Mật khẩu"))
+    first_name = models.CharField(max_length=150, verbose_name=_("Họ"), null=True, blank=True)
+    last_name = models.CharField(max_length=150, verbose_name=_("Tên"), null=True, blank=True)
+    full_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Họ và tên"))
+    password = models.CharField(max_length=128, verbose_name=_("Mật khẩu"), null=True, blank=True)
     phone_number = models.CharField(
         max_length=17, 
         null=True, 
@@ -43,6 +44,7 @@ class UserProfile(models.Model):
     """
     User profile model that extends the User model.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name=_("ID"))
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name=_("Người dùng"))
     bio = models.TextField(null=True, blank=True, verbose_name=_("Tiểu sử"))
     address = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Địa chỉ"))

@@ -24,6 +24,7 @@ class LearningMethodEnum(str, enum.Enum):
 
 
 class EnrollmentStatusEnum(str, enum.Enum):
+    PENDING = "pending"
     ENROLLED = "enrolled"
     STUDYING = "studying"
     COMPLETED = "completed"
@@ -52,7 +53,10 @@ class User(Base):
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
     username: Mapped[str] = mapped_column(String(150), unique=True)
     email: Mapped[str] = mapped_column(String(255), unique=True)
-    full_name: Mapped[str] = mapped_column(String(255))
+    first_name: Mapped[Optional[str]] = mapped_column(String(150))
+    last_name: Mapped[Optional[str]] = mapped_column(String(150))
+    full_name: Mapped[Optional[str]] = mapped_column(String(255))
+    password: Mapped[Optional[str]] = mapped_column(String(128))
     phone_number: Mapped[Optional[str]] = mapped_column(String(17))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_staff: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -64,6 +68,7 @@ class User(Base):
 
     # Relationships
     profile: Mapped[Optional["UserProfile"]] = relationship("UserProfile", back_populates="user", uselist=False)
+    student_profile: Mapped[Optional["Student"]] = relationship("Student", back_populates="user", uselist=False)
     enrollments: Mapped[List["StudentCourseEnrollment"]] = relationship("StudentCourseEnrollment", back_populates="user")
 
 
@@ -75,8 +80,6 @@ class UserProfile(Base):
     bio: Mapped[Optional[str]] = mapped_column(Text)
     address: Mapped[Optional[str]] = mapped_column(String(255))
     profile_picture: Mapped[Optional[str]] = mapped_column(String(255))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="profile")
@@ -275,6 +278,26 @@ class CourseAdditionalContentBlock(Base):
 # ENROLLMENT SYSTEM
 # ================================================================
 
+class Student(Base):
+    __tablename__ = "student"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("user.id"), unique=True)
+    name: Mapped[str] = mapped_column(String(200))
+    date_of_birth: Mapped[date] = mapped_column(Date)
+    student_id: Mapped[str] = mapped_column(String(20), unique=True)
+    phone: Mapped[str] = mapped_column(String(20))
+    address: Mapped[str] = mapped_column(Text)
+    parent_name: Mapped[str] = mapped_column(String(200))
+    parent_phone: Mapped[str] = mapped_column(String(20))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="student_profile")
+
+
 class StudentCourseEnrollment(Base):
     __tablename__ = "student_course_enrollment"
 
@@ -288,7 +311,7 @@ class StudentCourseEnrollment(Base):
     start_date: Mapped[Optional[date]] = mapped_column(Date)
     end_date: Mapped[Optional[date]] = mapped_column(Date)
 
-    status: Mapped[EnrollmentStatusEnum] = mapped_column(Enum(EnrollmentStatusEnum), default=EnrollmentStatusEnum.ENROLLED)
+    status: Mapped[EnrollmentStatusEnum] = mapped_column(Enum(EnrollmentStatusEnum), default=EnrollmentStatusEnum.PENDING)
 
     tuition_fee: Mapped[Decimal] = mapped_column(DECIMAL(10, 0))
     paid_amount: Mapped[Decimal] = mapped_column(DECIMAL(10, 0), default=0)
@@ -307,6 +330,24 @@ class StudentCourseEnrollment(Base):
     course_class: Mapped["CourseClass"] = relationship("CourseClass", back_populates="enrollments")
 
     __table_args__ = (UniqueConstraint('user_id', 'course_class_id'),)
+
+
+class StudentInquiry(Base):
+    __tablename__ = "student_inquiry"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_name: Mapped[str] = mapped_column(String(200))
+    student_age: Mapped[int] = mapped_column(Integer)
+    contact_name: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str] = mapped_column(String(255))
+    phone: Mapped[str] = mapped_column(String(20))
+    message: Mapped[Optional[str]] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default="new")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Note: interested_courses is ManyToMany in Django, handle separately if needed
 
 
 # ================================================================
@@ -388,7 +429,7 @@ class SiteSettings(Base):
     key: Mapped[str] = mapped_column(String(100), unique=True)
     value: Mapped[str] = mapped_column(Text)
     description: Mapped[Optional[str]] = mapped_column(Text)
-    data_type: Mapped[str] = mapped_column(String(20), default="text")  # text, number, boolean, json, url, email
+    data_type: Mapped[str] = mapped_column(String(20), default="text")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -433,7 +474,7 @@ class Banner(Base):
     description: Mapped[Optional[str]] = mapped_column(Text)
     image: Mapped[str] = mapped_column(String(255))
     link: Mapped[Optional[str]] = mapped_column(String(500))
-    position: Mapped[str] = mapped_column(String(50), default="hero")  # hero, sidebar, footer, popup
+    position: Mapped[str] = mapped_column(String(50), default="hero")
     order: Mapped[int] = mapped_column(Integer, default=0)
     start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     end_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -452,9 +493,9 @@ class ContactInquiry(Base):
     course_id: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("course.id"))
     course_class_id: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=False), ForeignKey("course_class.id"))
     message: Mapped[Optional[str]] = mapped_column(Text)
-    inquiry_type: Mapped[str] = mapped_column(String(50), default="course_inquiry")  # course_inquiry, general_contact
-    status: Mapped[str] = mapped_column(String(20), default="new")  # new, contacted, converted, closed
-    notes: Mapped[Optional[str]] = mapped_column(Text)  # Admin notes
+    inquiry_type: Mapped[str] = mapped_column(String(50), default="course_inquiry")
+    status: Mapped[str] = mapped_column(String(20), default="new")
+    notes: Mapped[Optional[str]] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

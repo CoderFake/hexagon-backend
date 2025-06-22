@@ -84,7 +84,7 @@ async def get_course(
     auth: Optional[Authorized] = Depends(maybe_user)
 ) -> vr.Course:
     """Get course details by slug"""
-    user = auth.user if auth else None
+    user = auth.User if auth else None
     course = (await cs.get_course_by_slug(slug)).get()
     return vr.Course.of(course, user)
 
